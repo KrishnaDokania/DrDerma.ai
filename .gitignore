@@ -1,0 +1,23 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# ML models
+*.pt
+*.pth
+
+# environment
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
