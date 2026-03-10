@@ -21,3 +21,5 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+data/images/*
+!data/images/.gitkeep
