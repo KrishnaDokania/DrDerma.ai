@@ -6,12 +6,39 @@ from PIL import Image
 import io
 import json
 import numpy as np
-from models.embedding_backbone import EfficientNetEmbedding
+import os
 import torch.nn.functional as F
 
-app = FastAPI(title="Skin ML Service")
+from models.embedding_backbone import EfficientNetEmbedding
+
+# =========================
+# App Config
+# =========================
+app = FastAPI(
+    title="DrDerma ML Service",
+    description="Skin disease triage embedding service",
+    version="1.0"
+)
 
 DEVICE = torch.device("cpu")
+
+# =========================
+# Paths
+# =========================
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+MODEL_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "models",
+    "skin_gate_model.pt"
+)
+
+CENTROID_PATH = os.path.join(
+    BASE_DIR,
+    "data",
+    "embeddings",
+    "centroids.json"
+)
 
 # =========================
 # Preprocessing
@@ -26,7 +53,7 @@ transform = transforms.Compose([
 ])
 
 # =========================
-# Load Models & Centroids
+# Load Models
 # =========================
 @app.on_event("startup")
 def load_model():
@@ -36,35 +63,48 @@ def load_model():
 
     torch.set_num_threads(2)
 
-    # 1️⃣ Load Skin Gate Model
-    skin_model = torch.jit.load("models/skin_gate_model.pt", map_location=DEVICE)
+    # Load Skin Detection Model
+    skin_model = torch.jit.load(MODEL_PATH, map_location=DEVICE)
     skin_model.eval()
 
-    # 2️⃣ Load EfficientNet Embedding Model
+    # Load Embedding Model
     embed_model = EfficientNetEmbedding().to(DEVICE)
     embed_model.eval()
 
-    # 3️⃣ Load Disease Centroids
-    with open(r"C:/Users/ilfan/Downloads/DrDerma.Ai/data/embeddings/centroids.json", "r") as f:
-
+    # Load Disease Centroids
+    with open(CENTROID_PATH, "r") as f:
         centroids = json.load(f)
 
-    print("Skin gate, embedding model, and centroids loaded successfully.")
-    
+    print("Models and centroids loaded successfully.")
 
 # =========================
-# Health
+# Health Endpoint
 # =========================
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
+# =========================
+# Validate Image
+# =========================
+def validate_image(file: UploadFile):
+
+    if file.content_type not in ["image/jpeg", "image/png"]:
+        return False
+
+    return True
 
 # =========================
-# Skin Check
+# Skin Check Endpoint
 # =========================
 @app.post("/skin-check")
 async def skin_check(file: UploadFile = File(...)):
+
+    if not validate_image(file):
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Only JPG and PNG images allowed"}
+        )
 
     try:
         contents = await file.read()
@@ -78,7 +118,7 @@ async def skin_check(file: UploadFile = File(...)):
     image_tensor = transform(image).unsqueeze(0).to(DEVICE)
 
     with torch.inference_mode():
-        outputs = skin_model(image_tensor)  # FIXED HERE
+        outputs = skin_model(image_tensor)
         probs = torch.softmax(outputs, dim=1)
         skin_prob = probs[0][1].item()
 
@@ -89,12 +129,17 @@ async def skin_check(file: UploadFile = File(...)):
         "confidence": round(skin_prob, 4)
     }
 
-
 # =========================
 # Embedding Endpoint
 # =========================
 @app.post("/embed")
 async def embed(file: UploadFile = File(...)):
+
+    if not validate_image(file):
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Only JPG and PNG images allowed"}
+        )
 
     try:
         contents = await file.read()
@@ -117,12 +162,17 @@ async def embed(file: UploadFile = File(...)):
         "vector": vector
     }
 
-
 # =========================
 # Similarity Check Endpoint
 # =========================
 @app.post("/similarity-check")
 async def similarity_check(file: UploadFile = File(...)):
+
+    if not validate_image(file):
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Only JPG and PNG images allowed"}
+        )
 
     try:
         contents = await file.read()
@@ -144,12 +194,13 @@ async def similarity_check(file: UploadFile = File(...)):
     results = []
 
     for item in centroids:
+
         centroid_vector = np.array(item["centroid"])
-        cosine = float(np.dot(query_vector, centroid_vector))
+        cosine_similarity = float(np.dot(query_vector, centroid_vector))
 
         results.append({
             "disease": item["disease"],
-            "similarity": round(cosine, 4)
+            "similarity": round(cosine_similarity, 4)
         })
 
     results.sort(key=lambda x: x["similarity"], reverse=True)
