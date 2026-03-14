@@ -89,10 +89,14 @@ def health():
 # =========================
 def validate_image(file: UploadFile):
 
-    if file.content_type not in ["image/jpeg", "image/png"]:
+    if file.content_type is None:
+        return False
+
+    if not file.content_type.startswith("image"):
         return False
 
     return True
+
 
 # =========================
 # Skin Check Endpoint
@@ -103,7 +107,7 @@ async def skin_check(file: UploadFile = File(...)):
     if not validate_image(file):
         return JSONResponse(
             status_code=400,
-            content={"error": "Only JPG and PNG images allowed"}
+            content={"error": "Invalid image file"}
         )
 
     try:
