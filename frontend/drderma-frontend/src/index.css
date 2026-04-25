@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+html {
+  scroll-behavior: smooth;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+
+.germ-img {
+  position: absolute;
+  bottom: -80px;
+
+  filter: blur(1px);
+
+  animation: floatUpRotate linear infinite;
+}
+
+@keyframes floatUpRotate {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-30vh) translateX(15px) rotate(90deg);
+  }
+  60% {
+    transform: translateY(-60vh) translateX(-15px) rotate(180deg);
+  }
+  100% {
+    transform: translateY(-110vh) translateX(10px) rotate(360deg);
+  }
+}
+.germ-test {
+  position: absolute;
+  bottom: -80px;
+  width: 80px;
+  opacity: 0.6;
+
+  animation: floatUp 10s linear infinite;
+}
+
+
+@keyframes float1 {
+  0%   { transform: translate(0, 0); }
+  50%  { transform: translate(40px, -60px); }
+  100% { transform: translate(-30px, 40px); }
+}
+
+@keyframes float2 {
+  0%   { transform: translate(0, 0); }
+  50%  { transform: translate(-50px, 40px); }
+  100% { transform: translate(30px, -60px); }
+}
+
+@keyframes float3 {
+  0%   { transform: translate(0, 0); }
+  50%  { transform: translate(60px, 50px); }
+  100% { transform: translate(-40px, -50px); }
+}
+
+@keyframes float4 {
+  0%   { transform: translate(0, 0); }
+  50%  { transform: translate(-40px, -60px); }
+  100% { transform: translate(50px, 40px); }
+}
+@keyframes drift1 {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(120vw, 20vh) rotate(360deg); }
+}
+
+@keyframes drift2 {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(-120vw, -20vh) rotate(360deg); }
+}
+
+@keyframes drift3 {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(30vw, 120vh) rotate(360deg); }
+}
+
+@keyframes drift4 {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(-30vw, -120vh) rotate(360deg); }
+}
+
+
+@keyframes scan {
+  0% { top: 0% }
+  100% { top: 100% }
+}
+
+.animate-scan {
+  animation: scan 2s linear infinite;
+}

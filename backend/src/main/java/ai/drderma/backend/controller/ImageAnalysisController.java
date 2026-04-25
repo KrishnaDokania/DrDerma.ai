@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/image")
 public class ImageAnalysisController {
@@ -29,13 +30,48 @@ public class ImageAnalysisController {
         this.embeddingStore = embeddingStore;
         this.knowledgeBase = knowledgeBase;
     }
+    @PostMapping("/validate")
+public Map<String, Object> validateImage(
+        @RequestParam("image") MultipartFile image
+) {
+    // 🔥 TEMP LOGIC (replace with your skin model)
+    boolean isSkin = true;
+    System.out.println("VALIDATION RESULT: " + isSkin);
+
+    return Map.of(
+            "isSkin", isSkin
+    );
+}
 
     // =========================================================
     // IMAGE ANALYSIS
     // =========================================================
-    @PostMapping("/analyze")
-    public Map<String, Object> analyze(@RequestParam("image") MultipartFile image) {
+ @PostMapping("/analyze")
+public Map<String, Object> analyze(@RequestParam("image") MultipartFile image) {
 
+    try {
+
+        // 🔥 STEP 1: BASIC VALIDATION
+        if (image == null || image.isEmpty()) {
+            return Map.of(
+                    "isSkin", false,
+                    "stage", "invalid",
+                    "reason", "Empty image"
+            );
+        }
+
+        // 🔥 STEP 2: YOUR SKIN CHECK (TEMP)
+        boolean isSkin = true; // replace with real model
+
+        if (!isSkin) {
+            return Map.of(
+                    "isSkin", false,
+                    "stage", "invalid",
+                    "reason", "No skin structure detected"
+            );
+        }
+
+        // 🔥 STEP 3: EMBEDDING (THIS WAS CRASHING)
         double[] queryVector = mlClient.embed(image);
 
         Map<String, Double> similarities =
@@ -56,30 +92,42 @@ public class ImageAnalysisController {
                         Double.compare(b.getSimilarityScore(), a.getSimilarityScore()))
                 .toList();
 
-        double gap = computeSimilarityGap(candidates);
-
         String nextQuestion = QuestionEngine.selectNextQuestion(
                 candidates,
                 knowledgeBase,
                 new HashSet<>()
         );
 
-        return buildResponse(
-                "questioning",
-                gap,
-                0.0,
-                candidates,
-                nextQuestion
+        Map<String, Object> response = Map.of(
+                "isSkin", true,
+                "stage", "questioning",
+                "candidates", candidates,
+                "nextQuestion", nextQuestion
+        );
+
+        return response;
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+
+        // 🔥 CRITICAL: NEVER RETURN 400
+        return Map.of(
+                "isSkin", false,
+                "stage", "invalid",
+                "reason", "Image processing failed"
         );
     }
-
+}
     // =========================================================
-    // ANSWER PROCESSING
+    // ANSWER PROCESSING (FIXED)
     // =========================================================
     @PostMapping("/answer")
     public Map<String, Object> processAnswer(
             @RequestBody Map<String, Object> request
     ) {
+
+        System.out.println("REQUEST PAYLOAD: " + request);
 
         String question = (String) request.get("question");
         String answer = (String) request.get("answer");
@@ -94,40 +142,72 @@ public class ImageAnalysisController {
         List<Map<String, Object>> incomingCandidates =
                 (List<Map<String, Object>>) request.get("candidates");
 
-        List<CandidateState> candidates = incomingCandidates.stream()
-                .map(c -> {
-                    CandidateState cs = new CandidateState(
-                            (String) c.get("disease"),
-                            ((Number) c.get("similarity")).doubleValue()
-                    );
+        // 🔴 SAFETY CHECK
+        if (incomingCandidates == null || incomingCandidates.isEmpty()) {
+            return Map.of(
+                    "stage", "error",
+                    "message", "No candidates received"
+            );
+        }
 
-                    if (c.containsKey("questionScore")) {
-                        cs.addQuestionScore(
-                                ((Number) c.get("questionScore")).doubleValue()
+        // =====================================================
+        // SAFE MAPPING (FIXED)
+        // =====================================================
+        List<CandidateState> candidates = new ArrayList<>();
+
+        for (Map<String, Object> c : incomingCandidates) {
+
+            if (c == null) continue;
+
+            String disease = (String) c.get("disease");
+            Number similarityNum = (Number) c.get("similarity");
+
+            if (disease == null || similarityNum == null) continue;
+
+            CandidateState cs = new CandidateState(
+                    disease,
+                    similarityNum.doubleValue()
+            );
+
+            if (c.containsKey("questionScore") && c.get("questionScore") != null) {
+                cs.addQuestionScore(
+                        ((Number) c.get("questionScore")).doubleValue()
+                );
+            }
+
+            if (c.containsKey("questionImpact") && c.get("questionImpact") != null) {
+
+                Map<String, Object> rawImpact =
+                        (Map<String, Object>) c.get("questionImpact");
+
+                Map<String, Integer> safeImpact = new HashMap<>();
+
+                for (Map.Entry<String, Object> entry : rawImpact.entrySet()) {
+                    if (entry.getValue() instanceof Number) {
+                        safeImpact.put(
+                                entry.getKey(),
+                                ((Number) entry.getValue()).intValue()
                         );
-                    if (c.containsKey("questionImpact")) {
+                    }
+                }
 
-    Map<String, Object> rawImpact =
-            (Map<String, Object>) c.get("questionImpact");
+                cs.setQuestionImpact(safeImpact);
+            }
 
-    Map<String, Integer> safeImpact = new HashMap<>();
+            candidates.add(cs);
+        }
 
-    for (Map.Entry<String, Object> entry : rawImpact.entrySet()) {
-        safeImpact.put(
-                entry.getKey(),
-                ((Number) entry.getValue()).intValue()
-        );
-    }
+        // 🔴 FINAL SAFETY CHECK
+        if (candidates.isEmpty()) {
+            return Map.of(
+                    "stage", "error",
+                    "message", "Candidates parsing failed"
+            );
+        }
 
-    cs.setQuestionImpact(safeImpact);
-}
-}
-
-                    return cs;
-                })
-                .toList();
-
-        // 🔥 Apply answer scoring + record impact
+        // =====================================================
+        // APPLY SCORING
+        // =====================================================
         for (CandidateState c : candidates) {
 
             DiseaseProfile profile = knowledgeBase.get(c.getDisease());
@@ -156,8 +236,17 @@ public class ImageAnalysisController {
                 .toList();
 
         double gap = computeFinalGap(candidates);
-
         double confidence = computeConfidence(candidates);
+        System.out.println("Candidates after scoring: " + candidates.size());
+        // 🔥 CRITICAL SAFETY CHECK (FINAL FIX)
+if (candidates == null || candidates.isEmpty()) {
+    return Map.of(
+            "stage", "error",
+            "message", "No valid candidates after processing",
+            "candidates", new ArrayList<>(),
+            "nextQuestion", null
+    );
+}
 
         String stage;
 
@@ -191,7 +280,6 @@ public class ImageAnalysisController {
         Map<String, Object> response =
                 buildResponse(stage, gap, confidence, candidates, nextQuestion);
 
-        // 🔥 Inject explanation if final
         if ("final_result".equals(stage)) {
             CandidateState top = candidates.get(0);
             response.put("topDisease", top.getDisease());
@@ -202,7 +290,7 @@ public class ImageAnalysisController {
     }
 
     // =========================================================
-    // UTIL METHODS
+    // UTIL METHODS (UNCHANGED)
     // =========================================================
     private double computeSimilarityGap(List<CandidateState> candidates) {
         if (candidates.size() < 2) return 0.0;
@@ -231,26 +319,12 @@ public class ImageAnalysisController {
 
         Map<String, Object> explanation = new HashMap<>();
 
-        double similarityContribution =
-                0.6 * topCandidate.getSimilarityScore();
-
-        double questionContribution =
-                0.4 * (topCandidate.getQuestionScore() / 10.0);
-
         explanation.put("imageEvidence",
                 "Image similarity score: "
                         + topCandidate.getSimilarityScore());
 
         explanation.put("questionEvidence",
                 topCandidate.getQuestionImpact());
-
-        Map<String, Object> breakdown = new HashMap<>();
-        breakdown.put("similarityContribution",
-                similarityContribution);
-        breakdown.put("questionContribution",
-                questionContribution);
-
-        explanation.put("scoreBreakdown", breakdown);
 
         return explanation;
     }
