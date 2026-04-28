@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 
+
 export default function Questionnaire({ question, step, total, onNext }) {
   const [answer, setAnswer] = useState("");
 
   const progress = (step / total) * 100;
 
-  return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+ return (
+  <div className="min-h-screen flex items-center justify-center px-4">
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-2xl bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 shadow-xl"
-      >
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="w-full max-w-2xl bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 shadow-xl"
+    >
 
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">

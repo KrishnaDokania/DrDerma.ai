@@ -1,5 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
+import { AnimatePresence } from "framer-motion";
+import LoadingQuestions from "./components/LoadingQuestions";
 
 import FloatingGerms from "./components/FloatingGerms";
 import Landing from "./components/Landing";
@@ -13,8 +15,7 @@ const BASE_URL = "http://localhost:8080/api/image";
 
 export default function App() {
   const [readyToContinue, setReadyToContinue] = useState(false);
-
-  const [stage, setStage] = useState("landing");
+  const [transitioning, setTransitioning] = useState(false);
 
   const [uploadedImage, setUploadedImage] = useState(null);
   const [uploadedImageFile, setUploadedImageFile] = useState(null);
@@ -24,7 +25,7 @@ export default function App() {
   const [step, setStep] = useState(1);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [validationResult, setValidationResult] = useState(null);
-
+const [stage, setStage] = useState("landing");
   const [answers, setAnswers] = useState([]);
   const [askedQuestions, setAskedQuestions] = useState([]);
   const [candidates, setCandidates] = useState([]);
@@ -97,30 +98,20 @@ const handleUpload = async (file) => {
   // =====================================================
   // 🔹 After validation → Analyze
   // =====================================================
-  const handleContinue = async () => {
+ const handleContinue = () => {
+  setTransitioning(true);
 
-    setStage("processing");
+  // first fade out current screen
+  setTimeout(() => {
+    setStage("loadingQuestions");
+    setTransitioning(false);
 
-    const formData = new FormData();
-    formData.append("image", uploadedImageFile);
-
-    try {
-      const res = await axios.post(`${BASE_URL}/analyze`, formData);
-
-      setCandidates(res.data.candidates || []);
-      setCurrentQuestion(res.data.nextQuestion);
-
-      setStep(1);
-      setAnswers([]);
-      setAskedQuestions([]);
-
+    // show loader for realistic delay
+    setTimeout(() => {
       setStage("questionnaire");
-
-    } catch (err) {
-      console.error(err);
-      setStage("landing");
-    }
-  };
+    }, 1200); // adjust 1–2s
+  }, 400);
+};
 
   // =====================================================
   // 🔹 Question Loop
@@ -178,54 +169,52 @@ const handleUpload = async (file) => {
       {/* Foreground */}
       <div className="relative z-10">
 
-        {stage === "landing" && (
-          <Landing onUpload={handleUpload} />
-        )}
+   <AnimatePresence mode="wait">
+  {stage === "landing" && (
+    <Landing key="landing" onUpload={handleUpload} />
+  )}
 
-        {stage === "validating" && (
-        <ValidationScreen
-  image={uploadedImage}
-  onComplete={(result) => {
-    setIsSkin(result);
-    setStage("validationResult");
-  }}
-/>
-        )}
+  {stage === "processing" && (
+    <ProcessingScreen
+      key="processing"
+      image={uploadedImage}
+      result={validationResult}
+      readyToContinue={readyToContinue}
+      onContinue={handleContinue}
+      transitioning={transitioning}
+    />
+  )}
 
-        {stage === "validationResult" && (
-          <ValidationResult
-            valid={isSkin}
-            onRetry={() => setStage("landing")}
-            onContinue={handleContinue}
-          />
-        )}
+  {stage === "validationResult" && (
+    <ValidationResult
+      key="validation"
+      valid={isSkin}
+      onRetry={() => setStage("landing")}
+    />
+  )}
 
-        {stage === "questionnaire" && (
-          <Questionnaire
-            question={currentQuestion}
-            step={step}
-            total={10}
-            onNext={handleNext}
-          />
-        )}
+  {stage === "questionnaire" && (
+    <Questionnaire
+      key="questionnaire"
+      question={currentQuestion}
+      step={step}
+      total={10}
+      onNext={handleNext}
+    />
+  )}
 
-    {stage === "processing" && (
-  <ProcessingScreen
-    image={uploadedImage}
-    result={validationResult}
-    readyToContinue={readyToContinue}
-    onContinue={handleContinue}
-  />
+  {stage === "result" && (
+    <ResultScreen
+      key="result"
+      data={finalResult}
+      image={uploadedImage}
+      onRestart={() => setStage("landing")}
+    />
+  )}
+  {stage === "loadingQuestions" && (
+  <LoadingQuestions key="loading" />
 )}
-
-        {stage === "result" && (
-          <ResultScreen
-            data={finalResult}
-            image={uploadedImage}
-            onRestart={() => setStage("landing")}
-          />
-        )}
-
+</AnimatePresence>
       </div>
     </div>
   );

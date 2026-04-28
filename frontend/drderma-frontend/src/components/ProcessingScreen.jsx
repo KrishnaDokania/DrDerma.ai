@@ -1,12 +1,20 @@
 import { motion } from "framer-motion";
 
-export default function ProcessingScreen({ image, result, readyToContinue, onContinue }) {
+export default function ProcessingScreen({ image, result, readyToContinue, onContinue, transitioning }) {
   // result: null = scanning, true = approved, false = rejected
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-
-      <div className="text-center">
+      
+      <motion.div
+  initial={{ opacity: 1 }}
+  animate={{
+    opacity: transitioning ? 0 : 1,
+    scale: transitioning ? 0.98 : 1
+  }}
+  transition={{ duration: 0.4 }}
+  className="text-center"
+>
 
         {/* 🔥 IMAGE BOX */}
         <div className="relative w-[340px] h-[340px] mx-auto mb-8 rounded-2xl overflow-hidden border border-white/20 shadow-xl">
@@ -108,23 +116,20 @@ export default function ProcessingScreen({ image, result, readyToContinue, onCon
 
 {result && readyToContinue && (
   <motion.div
-    initial={{ opacity: 0, y: 20, scale: 0.95 }}
-    animate={{ opacity: 1, y: 0, scale: 1 }}
-    transition={{
-      duration: 0.4,
-      ease: "easeOut",
-      delay: 0.3
-    }}
-  >
-    <button
-      onClick={onContinue}
-      className="mt-4 px-8 py-3 bg-green-500/20 border border-green-400/40 rounded-lg text-green-300 hover:bg-green-500/30 transition"
-    >
-      Continue
-    </button>
-  </motion.div>
+  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+  animate={{ opacity: 1, y: 0, scale: 1 }}
+  transition={{ duration: 0.4, ease: "easeOut", delay: 0.3 }}
+>
+  <motion.button
+  whileTap={{ scale: 0.95 }}
+  onClick={onContinue}
+  className="mt-4 px-8 py-3 bg-green-500/20 border border-green-400/40 rounded-lg text-green-300 hover:bg-green-500/30 transition"
+>
+  Continue
+</motion.button>
+</motion.div>
 )}
-      </div>
+     </motion.div>
     </div>
   );
 }
