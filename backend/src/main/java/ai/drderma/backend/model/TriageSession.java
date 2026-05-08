@@ -1,9 +1,10 @@
 package ai.drderma.backend.model;
-
+import ai.drderma.backend.model.CandidateState;
 import java.util.*;
 
 public class TriageSession {
-
+private final Set<String> eliminatedDiseases =
+        new HashSet<>();
     private final String sessionId;
     private final Map<String, Double> scores = new HashMap<>();
     private final Set<String> askedSignals = new HashSet<>();
@@ -48,4 +49,26 @@ public class TriageSession {
     public long getCreatedAt() {
         return createdAt;
     }
+    public List<CandidateState> toCandidateStates() {
+
+    List<CandidateState> list =
+            new ArrayList<>();
+
+    for (Map.Entry<String, Double> entry :
+            scores.entrySet()) {
+
+        CandidateState state =
+                new CandidateState(
+                        entry.getKey(),
+                        entry.getValue()
+                );
+
+        list.add(state);
+    }
+
+    return list;
+}
+public Set<String> getEliminatedDiseases() {
+    return eliminatedDiseases;
+}
 }

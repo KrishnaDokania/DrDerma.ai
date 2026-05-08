@@ -1,9 +1,12 @@
 package ai.drderma.backend.controller;
 
 import ai.drderma.backend.model.CandidateState;
-import ai.drderma.backend.engine.*;
+import ai.drderma.backend.engine.DiseaseKnowledgeBase;
+import ai.drderma.backend.image.EmbeddingStore;
+import ai.drderma.backend.image.ImageSimilarityEngine;
+import ai.drderma.backend.image.MlClient;
 import ai.drderma.backend.model.DiseaseProfile;
-
+import ai.drderma.backend.questions.QuestionEngine;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,20 +19,22 @@ public class ImageAnalysisController {
 
     private static final double CONFIDENCE_THRESHOLD = 0.25;
     private static final int MAX_QUESTIONS = 4;
-
+    private final QuestionEngine questionEngine;
     private final MlClient mlClient;
     private final EmbeddingStore embeddingStore;
     private final DiseaseKnowledgeBase knowledgeBase;
 
     public ImageAnalysisController(
-            MlClient mlClient,
-            EmbeddingStore embeddingStore,
-            DiseaseKnowledgeBase knowledgeBase
-    ) {
-        this.mlClient = mlClient;
-        this.embeddingStore = embeddingStore;
-        this.knowledgeBase = knowledgeBase;
-    }
+        MlClient mlClient,
+        EmbeddingStore embeddingStore,
+        DiseaseKnowledgeBase knowledgeBase,
+        QuestionEngine questionEngine
+) {
+    this.mlClient = mlClient;
+    this.embeddingStore = embeddingStore;
+    this.knowledgeBase = knowledgeBase;
+    this.questionEngine = questionEngine;
+}
     @PostMapping("/validate")
 public Map<String, Object> validateImage(
         @RequestParam("image") MultipartFile image
@@ -92,11 +97,11 @@ public Map<String, Object> analyze(@RequestParam("image") MultipartFile image) {
                         Double.compare(b.getSimilarityScore(), a.getSimilarityScore()))
                 .toList();
 
-        String nextQuestion = QuestionEngine.selectNextQuestion(
-                candidates,
-                knowledgeBase,
-                new HashSet<>()
-        );
+      String nextQuestion = questionEngine.selectNextQuestion(
+        candidates,
+        knowledgeBase,
+        new HashSet<>()
+);
 
         Map<String, Object> response = Map.of(
                 "isSkin", true,
@@ -270,11 +275,11 @@ if (candidates == null || candidates.isEmpty()) {
             Set<String> askedSet = new HashSet<>(askedQuestions);
             askedSet.add(question);
 
-            nextQuestion = QuestionEngine.selectNextQuestion(
-                    candidates,
-                    knowledgeBase,
-                    askedSet
-            );
+           nextQuestion = questionEngine.selectNextQuestion(
+                candidates,
+                knowledgeBase,
+                askedSet
+);
         }
 
         Map<String, Object> response =

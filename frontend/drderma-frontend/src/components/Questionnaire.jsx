@@ -1,9 +1,6 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-
-
+import { motion, AnimatePresence } from "framer-motion";
 export default function Questionnaire({ question, step, total, onNext }) {
-  const [answer, setAnswer] = useState("");
 
   const progress = (step / total) * 100;
 
