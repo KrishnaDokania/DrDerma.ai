@@ -1,16 +1,14 @@
 package ai.drderma.backend.service;
 
 import ai.drderma.backend.engine.DiseaseKnowledgeBase;
-import ai.drderma.backend.model.DiseaseProfile;
-import ai.drderma.backend.model.Feature;
-import ai.drderma.backend.model.ImageCandidate;
-import ai.drderma.backend.model.TriageSession;
+import ai.drderma.backend.model.*;
 import ai.drderma.backend.questions.FeatureRepository;
 import ai.drderma.backend.questions.QuestionEngine;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class TriageService {
@@ -18,63 +16,63 @@ public class TriageService {
     private static final long SESSION_TIMEOUT_MS =
             10 * 60 * 1000;
 
-    private static final double MIN_SCORE_TO_DECIDE = 2.5;
-
-    private static final double MIN_SCORE_GAP = 0.5;
-
-    private static final String DISCLAIMER =
-            "This system provides decision support only and is not a medical diagnosis";
-
     private final DiseaseKnowledgeBase kb;
-
-    private final QuestionEngine questionEngine;
 
     private final FeatureRepository featureRepository;
 
-    private final Map<String, TriageSession> sessions =
+    private final Map<String, TriageSession>
+            sessions =
             new ConcurrentHashMap<>();
 
     public TriageService(
+
             DiseaseKnowledgeBase kb,
-            QuestionEngine questionEngine,
+
             FeatureRepository featureRepository
     ) {
+
         this.kb = kb;
-        this.questionEngine = questionEngine;
-        this.featureRepository = featureRepository;
+
+        this.featureRepository =
+                featureRepository;
     }
 
+    // =====================================================
+    // START TRIAGE
+    // =====================================================
+
     public Map<String, Object> start(
+
             List<ImageCandidate> candidates
     ) {
 
-        if (candidates == null || candidates.isEmpty()) {
-
-            return Map.of(
-                    "error",
-                    "No image candidates provided"
-            );
-        }
-
         TriageSession session =
-                new TriageSession(candidates);
+                new TriageSession(
+                        candidates
+                );
 
         sessions.put(
+
                 session.getSessionId(),
+
                 session
         );
 
         return next(session);
     }
 
+    // =====================================================
+    // ANSWER QUESTION
+    // =====================================================
+
     public Map<String, Object> answer(
+
             String sessionId,
+
             String signal,
+
             String answer
     ) {
-
-        signal = signal.toLowerCase();
-        answer = answer.toLowerCase();
 
         TriageSession session =
                 sessions.get(sessionId);
@@ -83,7 +81,7 @@ public class TriageService {
 
             return Map.of(
                     "error",
-                    "Invalid or expired session"
+                    "Session not found"
             );
         }
 
@@ -97,246 +95,194 @@ public class TriageService {
 
             return Map.of(
                     "error",
-                    "Session expired. Please restart triage."
+                    "Session expired"
             );
         }
 
-        session.getAskedSignals().add(signal);
+        signal = signal.toLowerCase();
 
-        applyAnswerToScores(
+        answer = answer.toLowerCase();
+
+        session.getAskedSignals()
+                .add(signal);
+
+        applyAnswer(
+
                 session,
+
                 signal,
+
                 answer
         );
 
         return next(session);
     }
 
-    private void applyAnswerToScores(
+    // =====================================================
+    // APPLY ANSWER
+    // =====================================================
+
+    private void applyAnswer(
+
             TriageSession session,
+
             String signal,
+
             String answer
     ) {
 
-        for (String disease :
-                session.getScores().keySet()) {
+        for (CandidateState candidate :
+                session.getCandidates()) {
 
             DiseaseProfile profile =
-                    kb.get(disease);
+                    kb.get(
+                            candidate.getDisease()
+                    );
 
             if (profile == null) {
                 continue;
             }
 
-            int weight =
+            int delta =
+
                     profile.getSignalWeights()
-                            .getOrDefault(signal, Map.of())
-                            .getOrDefault(answer, 0);
 
-            double updatedScore =
-                    session.getScores()
-                            .get(disease)
-                            + weight;
+                            .getOrDefault(
+                                    signal,
+                                    Map.of()
+                            )
 
-            session.getScores()
-                    .put(disease, updatedScore);
-                    if (updatedScore < -5) {
+                            .getOrDefault(
+                                    answer,
+                                    0
+                            );
 
-    session.getEliminatedDiseases()
-            .add(disease);
-}
+            candidate.addQuestionScore(
+                    delta
+            );
 
-            if (weight != 0) {
+            candidate.recordImpact(
+                    signal,
+                    delta
+            );
+
+            // =====================================
+            // REASONS
+            // =====================================
+
+            if (delta != 0) {
 
                 session.getReasons()
-                        .get(disease)
-                        .add(signal + " = " + answer);
+
+                        .get(
+                                candidate.getDisease()
+                        )
+
+                        .add(
+                                signal
+                                        + " = "
+                                        + answer
+                        );
             }
         }
     }
+
+    // =====================================================
+    // NEXT STEP
+    // =====================================================
 
     private Map<String, Object> next(
             TriageSession session
     ) {
 
-        List<Map.Entry<String, Double>> ranked =
-        session.getScores()
-                .entrySet()
-                .stream()
+        List<CandidateState> ranked =
 
-                .filter(entry ->
-                        !session.getEliminatedDiseases()
-                                .contains(entry.getKey())
-                )
+                session.getCandidates()
 
-                .sorted((a, b) ->
-                        Double.compare(
-                                b.getValue(),
-                                a.getValue()
+                        .stream()
+
+                        .filter(candidate ->
+
+                                !session
+                                        .getEliminatedDiseases()
+                                        .contains(
+                                                candidate.getDisease()
+                                        )
                         )
-                )
 
-                .toList();
-        if (ranked.isEmpty()) {
+                        .sorted((a, b) ->
 
-            return Map.of(
-                    "status",
-                    "error",
+                                Double.compare(
 
-                    "message",
-                    "No diseases available for evaluation"
+                                        b.getFinalScore(),
+
+                                        a.getFinalScore()
+                                )
+                        )
+
+                        .collect(Collectors.toList());
+
+        eliminateWeakCandidates(
+                ranked
+        );
+
+        // =====================================
+        // STOP CONDITION
+        // =====================================
+
+        if (
+                shouldStop(ranked)
+        ) {
+
+            return buildFinalResult(
+
+                    session,
+
+                    ranked
             );
         }
 
-        double topScore =
-                ranked.get(0).getValue();
+        // =====================================
+        // NEXT QUESTION
+        // =====================================
 
-        double secondScore =
-                ranked.size() > 1
-                        ? ranked.get(1).getValue()
-                        : 0.0;
+        String nextQuestion =
 
-        double totalPositiveScore =
-                ranked.stream()
-                        .mapToDouble(Map.Entry::getValue)
-                        .filter(v -> v > 0)
-                        .sum();
+                QuestionEngine
+                        .selectNextQuestion(
 
-        boolean confident =
-                topScore >= MIN_SCORE_TO_DECIDE
-                        &&
-                        (topScore - secondScore)
-                                >= MIN_SCORE_GAP;
+                                ranked,
 
-        if (confident) {
+                                kb,
 
-            Map<String, Object> mostLikely =
-                    new HashMap<>();
+                                session
+                                        .getAskedSignals()
+                        );
 
-            mostLikely.put(
-                    "disease",
-                    ranked.get(0).getKey()
-            );
+        if (nextQuestion == null) {
 
-            mostLikely.put(
-                    "confidence",
+            return buildFinalResult(
 
-                    totalPositiveScore == 0
-                            ? 0
-                            : Math.min(
-                                    (topScore * 100.0)
-                                            / totalPositiveScore,
-                                    90.0
-                            )
-            );
+                    session,
 
-            mostLikely.put(
-                    "why",
-
-                    session.getReasons()
-                            .get(
-                                    ranked.get(0).getKey()
-                            )
-            );
-
-            List<Map<String, Object>> alternatives =
-                    ranked.stream()
-                            .skip(1)
-                            .filter(e -> e.getValue() > 0)
-
-                            .map(e -> {
-
-                                Map<String, Object> m =
-                                        new HashMap<>();
-
-                                m.put(
-                                        "disease",
-                                        e.getKey()
-                                );
-
-                                m.put(
-                                        "confidence",
-
-                                        totalPositiveScore == 0
-                                                ? 0
-                                                : (
-                                                e.getValue()
-                                                        * 100.0
-                                        ) / totalPositiveScore
-                                );
-
-                                return m;
-                            })
-
-                            .toList();
-
-            Map<String, Object> response =
-                    new HashMap<>();
-
-            response.put(
-                    "mostLikely",
-                    mostLikely
-            );
-
-            response.put(
-                    "alternatives",
-                    alternatives
-            );
-
-            response.put(
-                    "note",
-                    DISCLAIMER
-            );
-
-            return response;
-        }
-
-        String nextSignal =
-                questionEngine.selectNextQuestion(
-                        session.toCandidateStates(),
-                        kb,
-                        session.getAskedSignals()
-                );
-
-        if (nextSignal == null) {
-
-            return Map.of(
-                    "status",
-                    "uncertain",
-
-                    "message",
-                    "No more distinguishing questions available",
-
-                    "rankedResults",
                     ranked
             );
         }
 
         Feature feature =
-                featureRepository.getFeature(
-                        nextSignal
-                );
+                featureRepository
+                        .getFeature(
+                                nextQuestion
+                        );
 
-        if (feature == null) {
-
-            return Map.of(
-                    "status",
-                    "uncertain",
-
-                    "message",
-                    "Missing question for signal: "
-                            + nextSignal,
-
-                    "rankedResults",
-                    ranked
-            );
-        }
-
-        Map<String, Object> response =
+        Map<String, Object>
+                response =
                 new HashMap<>();
 
         response.put(
+
                 "sessionId",
+
                 session.getSessionId()
         );
 
@@ -345,6 +291,215 @@ public class TriageService {
                 feature
         );
 
+        response.put(
+
+                "activeDiseases",
+
+                ranked.stream()
+
+                        .limit(3)
+
+                        .map(
+                                CandidateState::getDisease
+                        )
+
+                        .toList()
+        );
+
         return response;
+    }
+
+    // =====================================================
+    // ELIMINATION
+    // =====================================================
+
+    private void eliminateWeakCandidates(
+            List<CandidateState> ranked
+    ) {
+
+        if (ranked.isEmpty()) {
+            return;
+        }
+
+        double top =
+                ranked.get(0)
+                        .getFinalScore();
+
+        ranked.removeIf(candidate -> {
+
+            double diff =
+                    top
+                            - candidate
+                            .getFinalScore();
+
+            return diff > 35;
+        });
+    }
+
+    // =====================================================
+    // STOPPING
+    // =====================================================
+
+    private boolean shouldStop(
+            List<CandidateState> ranked
+    ) {
+
+        if (ranked.size() <= 1) {
+            return true;
+        }
+
+        double top =
+                ranked.get(0)
+                        .getFinalScore();
+
+        double second =
+                ranked.get(1)
+                        .getFinalScore();
+
+        double gap = top - second;
+
+        return gap >= 25;
+    }
+
+    // =====================================================
+    // FINAL RESULT
+    // =====================================================
+
+    private Map<String, Object>
+    buildFinalResult(
+
+            TriageSession session,
+
+            List<CandidateState> ranked
+    ) {
+
+        CandidateState top =
+                ranked.get(0);
+
+        CandidateState second =
+                ranked.size() > 1
+                        ? ranked.get(1)
+                        : top;
+
+        double confidence =
+                calculateConfidence(
+                        top,
+                        second
+                );
+
+        Map<String, Object>
+                mostLikely =
+                new HashMap<>();
+
+        mostLikely.put(
+                "disease",
+                top.getDisease()
+        );
+
+        mostLikely.put(
+                "confidence",
+                confidence
+        );
+
+        mostLikely.put(
+                "why",
+
+                session.getReasons()
+                        .get(
+                                top.getDisease()
+                        )
+        );
+
+        List<Map<String, Object>>
+                alternatives =
+
+                ranked.stream()
+
+                        .skip(1)
+
+                        .limit(3)
+
+                        .map(candidate -> {
+
+                            Map<String, Object>
+                                    alt =
+                                    new HashMap<>();
+
+                            alt.put(
+                                    "disease",
+                                    candidate.getDisease()
+                            );
+
+                            alt.put(
+                                    "confidence",
+
+                                    Math.max(
+                                            confidence
+                                                    - 15,
+                                            5
+                                    )
+                            );
+
+                            return alt;
+                        })
+
+                        .toList();
+
+        Map<String, Object>
+                response =
+                new HashMap<>();
+
+        response.put(
+                "mostLikely",
+                mostLikely
+        );
+
+        response.put(
+                "alternatives",
+                alternatives
+        );
+
+        response.put(
+                "finished",
+                true
+        );
+
+        return response;
+    }
+
+    // =====================================================
+    // CONFIDENCE
+    // =====================================================
+
+    private double calculateConfidence(
+
+            CandidateState top,
+
+            CandidateState second
+    ) {
+
+        double gap =
+                top.getFinalScore()
+                        - second.getFinalScore();
+
+        double confidence =
+
+                100 *
+                        (
+                                1
+                                        - Math.exp(
+                                        -gap / 15
+                                )
+                        );
+
+        if (confidence > 99) {
+            confidence = 99;
+        }
+
+        if (confidence < 35) {
+            confidence = 35;
+        }
+
+        return confidence;
     }
 }

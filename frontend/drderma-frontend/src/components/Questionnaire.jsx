@@ -1,71 +1,437 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-export default function Questionnaire({ question, step, total, onNext }) {
 
-  const progress = (step / total) * 100;
+export default function Questionnaire({
 
- return (
-  <div className="min-h-screen flex items-center justify-center px-4">
+  question,
 
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="w-full max-w-2xl bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 shadow-xl"
-    >
+  step,
+
+  total,
+
+  onNext,
+
+  activeDiseases = []
+}) {
+
+  const [answer, setAnswer] =
+    useState("");
+
+  const progress =
+    (step / total) * 100;
+
+  const renderInput = () => {
+
+    // =====================================
+    // BOOLEAN
+    // =====================================
+
+    if (
+      question?.type === "BOOLEAN"
+    ) {
+
+      return (
+
+        <div className="
+          grid grid-cols-2 gap-4
+        ">
+
+          {["yes", "no"].map((option) => (
+
+            <motion.button
+              key={option}
+
+              whileHover={{
+                scale: 1.03
+              }}
+
+              whileTap={{
+                scale: 0.97
+              }}
+
+              onClick={() =>
+                setAnswer(option)
+              }
+
+              className={`
+                p-5 rounded-2xl
+                border transition-all
+                text-lg capitalize
+                backdrop-blur-md
+
+                ${answer === option
+                  ? "bg-yellow-400 text-black border-yellow-400"
+                  : "bg-white/5 text-white border-white/10 hover:border-yellow-400/40"
+                }
+              `}
+            >
+              {option}
+            </motion.button>
+          ))}
+
+        </div>
+      );
+    }
+
+    // =====================================
+    // ENUM
+    // =====================================
+
+    if (
+      question?.type === "ENUM"
+    ) {
+
+      return (
+
+        <div className="
+          flex flex-wrap gap-3
+        ">
+
+          {question.options?.map(
+            (option) => (
+
+              <motion.button
+                key={option}
+
+                whileHover={{
+                  scale: 1.03
+                }}
+
+                whileTap={{
+                  scale: 0.96
+                }}
+
+                onClick={() =>
+                  setAnswer(option)
+                }
+
+                className={`
+                  px-5 py-3
+                  rounded-2xl
+                  border transition-all
+                  capitalize
+
+                  ${answer === option
+                    ? "bg-yellow-400 text-black border-yellow-400"
+                    : "bg-white/5 text-white border-white/10 hover:border-yellow-400/30"
+                  }
+                `}
+              >
+                {option.replaceAll(
+                  "_",
+                  " "
+                )}
+              </motion.button>
+            )
+          )}
+
+        </div>
+      );
+    }
+
+    // =====================================
+    // NUMBER
+    // =====================================
+
+    if (
+      question?.type === "NUMBER"
+    ) {
+
+      return (
+
+        <input
+          type="number"
+
+          value={answer}
+
+          onChange={(e) =>
+            setAnswer(
+              e.target.value
+            )
+          }
+
+          placeholder="Enter value..."
+
+          className="
+            w-full p-5 rounded-2xl
+            bg-white/5 border border-white/10
+            text-white text-lg
+            focus:outline-none
+            focus:border-yellow-400
+          "
+        />
+      );
+    }
+
+    // =====================================
+    // FALLBACK TEXT
+    // =====================================
+
+    return (
+
+      <textarea
+
+        value={answer}
+
+        onChange={(e) =>
+          setAnswer(
+            e.target.value
+          )
+        }
+
+        placeholder="
+          Describe symptoms...
+        "
+
+        className="
+          w-full h-32 p-5 rounded-2xl
+          bg-white/5 border border-white/10
+          text-white resize-none
+          focus:outline-none
+          focus:border-yellow-400
+        "
+      />
+    );
+  };
+
+  return (
+
+    <div className="
+      min-h-screen
+      flex items-center justify-center
+      px-4 py-10
+    ">
+
+      <motion.div
+
+        initial={{
+          opacity: 0,
+          y: 30
+        }}
+
+        animate={{
+          opacity: 1,
+          y: 0
+        }}
+
+        transition={{
+          duration: 0.5
+        }}
+
+        className="
+          w-full max-w-3xl
+          bg-white/10
+          border border-white/10
+          backdrop-blur-2xl
+          rounded-[32px]
+          p-8 md:p-10
+          shadow-2xl
+        "
+      >
 
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-yellow-400 font-semibold text-lg">
-            Clinical Context
-          </h2>
 
-          <span className="text-gray-400 text-sm">
+        <div className="
+          flex items-center justify-between
+          mb-6
+        ">
+
+          <div>
+
+            <div className="
+              text-yellow-400
+              text-sm tracking-widest
+              uppercase mb-2
+            ">
+              AI Clinical Analysis
+            </div>
+
+            <h2 className="
+              text-3xl font-bold text-white
+            ">
+              Adaptive Dermatology Triage
+            </h2>
+
+          </div>
+
+          <div className="
+            text-white/50 text-sm
+          ">
             {step} / {total}
-          </span>
+          </div>
+
         </div>
 
-        {/* PROGRESS BAR */}
-        <div className="w-full h-2 bg-white/10 rounded-full mb-6 overflow-hidden">
+        {/* PROGRESS */}
+
+        <div className="
+          w-full h-3
+          bg-white/5
+          rounded-full overflow-hidden
+          mb-8
+        ">
+
           <motion.div
-            className="h-full bg-yellow-400"
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.5 }}
+
+            initial={{
+              width: 0
+            }}
+
+            animate={{
+              width: `${progress}%`
+            }}
+
+            transition={{
+              duration: 0.5
+            }}
+
+            className="
+              h-full bg-yellow-400
+            "
           />
+
+        </div>
+
+        {/* ACTIVE DISEASES */}
+
+        <div className="mb-8">
+
+          <div className="
+            text-white/40
+            uppercase text-xs
+            tracking-[3px]
+            mb-4
+          ">
+            Active Differential Diagnosis
+          </div>
+
+          <div className="
+            flex flex-wrap gap-3
+          ">
+
+            <AnimatePresence>
+
+              {activeDiseases.map(
+                (disease) => (
+
+                  <motion.div
+
+                    key={disease}
+
+                    initial={{
+                      opacity: 0,
+                      scale: 0.8
+                    }}
+
+                    animate={{
+                      opacity: 1,
+                      scale: 1
+                    }}
+
+                    exit={{
+                      opacity: 0,
+                      scale: 0.7
+                    }}
+
+                    className="
+                      px-4 py-2 rounded-2xl
+                      bg-yellow-400/10
+                      border border-yellow-400/20
+                      text-yellow-300
+                      capitalize text-sm
+                    "
+                  >
+                    {disease.replaceAll(
+                      "_",
+                      " "
+                    )}
+                  </motion.div>
+                )
+              )}
+
+            </AnimatePresence>
+
+          </div>
+
         </div>
 
         {/* QUESTION */}
-        <motion.p
-          key={question}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-white text-lg leading-relaxed mb-6"
-        >
-          {question}
-        </motion.p>
 
-        {/* INPUT */}
-        <textarea
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          placeholder="Describe your symptoms in detail..."
-          className="w-full h-28 p-4 rounded-xl bg-black/30 border border-white/20 focus:border-yellow-400 focus:outline-none text-white resize-none mb-6"
-        />
+        <AnimatePresence mode="wait">
+
+          <motion.div
+
+            key={question?.key}
+
+            initial={{
+              opacity: 0,
+              y: 15
+            }}
+
+            animate={{
+              opacity: 1,
+              y: 0
+            }}
+
+            exit={{
+              opacity: 0,
+              y: -15
+            }}
+
+            transition={{
+              duration: 0.35
+            }}
+          >
+
+            <div className="
+              text-white text-2xl
+              leading-relaxed
+              mb-8
+            ">
+              {question?.question}
+            </div>
+
+            {renderInput()}
+
+          </motion.div>
+
+        </AnimatePresence>
 
         {/* BUTTON */}
-        <button
+
+        <motion.button
+
+          whileHover={{
+            scale: 1.02
+          }}
+
+          whileTap={{
+            scale: 0.98
+          }}
+
+          disabled={!answer}
+
           onClick={() => {
-            if (!answer.trim()) return;
+
             onNext(answer);
+
             setAnswer("");
           }}
-          className="w-full bg-yellow-400 text-black py-3 rounded-xl font-semibold hover:scale-[1.02] transition"
+
+          className="
+            w-full mt-10
+            bg-yellow-400
+            text-black font-semibold
+            py-4 rounded-2xl
+            text-lg
+            disabled:opacity-40
+          "
         >
-          Next Step
-        </button>
+          Continue Analysis
+        </motion.button>
 
       </motion.div>
+
     </div>
   );
 }

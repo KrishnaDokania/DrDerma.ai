@@ -1,148 +1,280 @@
-export default function ResultScreen({ data, image, onRestart }) {
+import { motion } from "framer-motion";
 
-  // ================= LOW CONFIDENCE =================
-  if (!data || data.confidence < 0.6) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4">
+const diseaseDescriptions = {
+  tinea_corporis:
+    "A superficial fungal infection that causes ring-shaped, itchy, red patches on the skin.",
 
-        <div className="bg-white/10 backdrop-blur-lg border border-yellow-400/40 rounded-2xl p-8 max-w-md text-center shadow-xl">
+  psoriasis:
+    "A chronic autoimmune condition causing rapid skin cell buildup and scaling.",
 
-          <h2 className="text-yellow-400 text-xl font-semibold mb-3">
-            Unable to Diagnose
-          </h2>
+  eczema:
+    "An inflammatory skin condition associated with itching, redness, and irritation.",
 
-          <p className="text-gray-300 mb-6">
-            The system could not reach a confident conclusion.  
-            Please upload a clearer image or consult a medical professional.
-          </p>
+  rosacea:
+    "A chronic facial skin condition causing redness and visible blood vessels.",
 
-          <button
-            onClick={onRestart}
-            className="bg-yellow-400 text-black px-6 py-2 rounded-lg font-medium hover:scale-105 transition"
-          >
-            Try Again
-          </button>
+  acne:
+    "A common skin condition caused by clogged pores and inflammation.",
+};
 
-        </div>
-      </div>
-    );
-  }
+export default function ResultScreen({
+  result,
+  image,
+  onRestart,
+}) {
 
-  // ================= CONFIDENCE COLOR =================
-  const confidence = data.confidence;
+  if (!result) return null;
 
-  let badgeColor = "text-green-400 border-green-400 bg-green-400/10";
-  if (confidence < 0.75) {
-    badgeColor = "text-yellow-400 border-yellow-400 bg-yellow-400/10";
-  }
+  const mostLikely = result.mostLikely;
 
-  // ================= MAIN RESULT =================
+  const confidence =
+    Math.round(mostLikely.confidence);
+
+  const diseaseName =
+    mostLikely.disease
+      .replaceAll("_", " ");
+
+  const description =
+    diseaseDescriptions[
+      mostLikely.disease
+    ] || "AI-generated clinical assessment.";
+console.log("RESULT IMAGE:", image);
   return (
-    <div className="min-h-screen px-6 py-10">
 
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10">
+    <div className="
+      min-h-screen
+      flex items-center justify-center
+      px-6 py-10
+    ">
 
-        {/* ================= LEFT ================= */}
-        <div>
+      <motion.div
+        initial={{
+          opacity: 0,
+          y: 20,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        className="
+          w-full max-w-5xl
+          grid grid-cols-1 lg:grid-cols-2
+          gap-8
+        "
+      >
 
-          <div className="relative bg-white/10 border border-white/20 rounded-2xl overflow-hidden shadow-xl">
+        {/* LEFT PANEL */}
 
-            <img
-              src={image}
-              alt="Uploaded"
-              className="w-full h-[350px] object-cover"
+        <div className="
+          bg-white/10
+          backdrop-blur-xl
+          border border-white/10
+          rounded-3xl
+          p-5
+          shadow-2xl
+        ">
+
+          <div className="
+            relative overflow-hidden
+            rounded-2xl
+          ">
+
+           <img
+  src={image || "/placeholder.png"}
+              alt="uploaded"
+              className="
+                w-full
+                h-[500px]
+                object-contain bg-black/20              "
             />
 
-            {/* STATUS BADGE */}
-            <span className="absolute top-3 left-3 bg-black/60 px-3 py-1 rounded-lg text-sm">
+            <div className="
+              absolute top-4 right-4
+              px-4 py-2
+              rounded-full
+              bg-black/50
+              backdrop-blur-md
+              text-yellow-400
+              text-sm
+              border border-white/10
+            ">
               Processed
-            </span>
+            </div>
 
           </div>
 
           <button
             onClick={onRestart}
-            className="mt-6 w-full bg-yellow-400 text-black py-2 rounded-lg font-medium hover:scale-105 transition"
+            className="
+              mt-6
+              w-full
+              py-4
+              rounded-2xl
+              border border-white/10
+              bg-white/5
+              hover:bg-white/10
+              transition-all
+              text-white
+              text-lg
+            "
           >
             Start New Analysis
           </button>
 
         </div>
 
-        {/* ================= RIGHT ================= */}
-        <div className="space-y-6">
+        {/* RIGHT PANEL */}
 
-          {/* HEADER */}
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-6 shadow-xl">
+        <div className="
+          bg-white/10
+          backdrop-blur-xl
+          border border-white/10
+          rounded-3xl
+          p-6
+          shadow-2xl
+        ">
 
-            <div className={`inline-block px-3 py-1 text-sm rounded-lg border mb-3 ${badgeColor}`}>
-              {confidence >= 0.75 ? "High Confidence" : "Moderate Confidence"}
-            </div>
+          {/* CONFIDENCE BADGE */}
 
-            <h1 className="text-2xl font-bold text-white mb-2">
-              {data.topDisease}
-            </h1>
+          <div className="
+            inline-flex
+            items-center
+            px-5 py-2
+            rounded-full
+            bg-emerald-500/20
+            border border-emerald-400/20
+            text-emerald-300
+            text-sm
+            font-medium
+            mb-8
+          ">
+            High Confidence Result
+          </div>
 
-            <p className="text-gray-300">
-              Confidence: {(confidence * 100).toFixed(1)}%
-            </p>
+          {/* TITLE */}
 
+          <h1 className="
+            text-4xl
+            font-bold
+            text-white
+            capitalize
+            mb-4
+          ">
+            {diseaseName}
+          </h1>
+
+          {/* CONFIDENCE */}
+
+          <div className="
+            text-yellow-400
+            text-2xl
+            font-semibold
+            mb-10
+          ">
+            Confidence: {confidence}%
           </div>
 
           {/* DESCRIPTION */}
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-5 shadow-xl">
-            <h3 className="text-yellow-400 mb-2 font-semibold">
+
+          <div className="mb-10">
+
+            <h2 className="
+              text-white/50
+              uppercase
+              tracking-wider
+              text-sm
+              mb-4
+            ">
               Description
-            </h3>
-            <p className="text-gray-300 text-sm leading-relaxed">
-              {data.explanation?.imageEvidence || "No description available."}
+            </h2>
+
+            <p className="
+              text-white/90
+              leading-relaxed
+              text-xl
+            ">
+              {description}
             </p>
+
           </div>
 
           {/* RECOMMENDATION */}
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-5 shadow-xl">
-            <h3 className="text-yellow-400 mb-2 font-semibold">
-              Recommendation
-            </h3>
-            <p className="text-gray-300 text-sm">
-              Consult a dermatologist if symptoms persist. Maintain hygiene and avoid irritation.
+
+          <div className="
+            bg-black/20
+            border border-white/10
+            rounded-2xl
+            p-6
+            mb-10
+          ">
+
+            <h2 className="
+              text-white/50
+              uppercase
+              tracking-wider
+              text-sm
+              mb-4
+            ">
+              Clinical Recommendation
+            </h2>
+
+            <p className="
+              text-white/90
+              leading-relaxed
+              text-xl
+            ">
+              A dermatologist consultation is recommended for proper clinical confirmation and treatment planning.
             </p>
+
           </div>
 
-          {/* CONTEXT */}
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-5 shadow-xl">
-            <h3 className="text-yellow-400 mb-2 font-semibold">
-              Context Provided
-            </h3>
-            <p className="text-gray-400 text-sm">
-              {JSON.stringify(data.explanation?.questionEvidence || {}, null, 2)}
-            </p>
-          </div>
+          {/* INDICATORS */}
 
-          {/* SIMILAR IMAGES */}
-          {data.similarImages && data.similarImages.length > 0 && (
-            <div className="bg-white/10 border border-white/20 rounded-2xl p-5 shadow-xl">
+          <div>
 
-              <h3 className="text-yellow-400 mb-3 font-semibold">
-                Similar Cases
-              </h3>
+            <h2 className="
+              text-white/50
+              uppercase
+              tracking-wider
+              text-sm
+              mb-5
+            ">
+              Clinical Indicators
+            </h2>
 
-              <div className="flex gap-3 overflow-x-auto">
-                {data.similarImages.map((img, i) => (
-                  <img
-                    key={i}
-                    src={img}
-                    alt="similar"
-                    className="w-24 h-24 object-cover rounded-lg border border-white/20"
-                  />
-                ))}
-              </div>
+            <div className="
+              flex flex-wrap gap-3
+            ">
+
+              {mostLikely.why?.map(
+                (item, index) => (
+
+                  <div
+                    key={index}
+                    className="
+                      px-4 py-3
+                      rounded-2xl
+                      bg-white/10
+                      border border-white/10
+                      text-white/90
+                    "
+                  >
+                    {item
+                      .replaceAll("_", " ")
+                    }
+                  </div>
+
+                )
+              )}
 
             </div>
-          )}
+
+          </div>
 
         </div>
-      </div>
+
+      </motion.div>
+
     </div>
   );
 }

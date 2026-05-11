@@ -1,221 +1,525 @@
 import { useState } from "react";
 import axios from "axios";
-import { AnimatePresence } from "framer-motion";
-import LoadingQuestions from "./components/LoadingQuestions";
+import { AnimatePresence, motion } from "framer-motion";
 
+import LoadingQuestions from "./components/LoadingQuestions";
 import FloatingGerms from "./components/FloatingGerms";
 import Landing from "./components/Landing";
-import ValidationScreen from "./components/ValidationScreen";
 import ValidationResult from "./components/ValidationResult";
 import Questionnaire from "./components/Questionnaire";
 import ProcessingScreen from "./components/ProcessingScreen";
 import ResultScreen from "./components/ResultScreen";
 
-const BASE_URL = "http://localhost:8080/api/image";
+const BASE_URL =
+  "http://localhost:8080/api";
 
 export default function App() {
-  const [readyToContinue, setReadyToContinue] = useState(false);
-  const [transitioning, setTransitioning] = useState(false);
-
-  const [uploadedImage, setUploadedImage] = useState(null);
-  const [uploadedImageFile, setUploadedImageFile] = useState(null);
-
-  const [isSkin, setIsSkin] = useState(null);
-
-  const [step, setStep] = useState(1);
-  const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [validationResult, setValidationResult] = useState(null);
-const [stage, setStage] = useState("landing");
-  const [answers, setAnswers] = useState([]);
-  const [askedQuestions, setAskedQuestions] = useState([]);
-  const [candidates, setCandidates] = useState([]);
-
-  const [finalResult, setFinalResult] = useState(null);
 
   // =====================================================
-  // 🔹 Upload → Validate
+  // STATE
   // =====================================================
-const handleUpload = async (file) => {
-  const url = URL.createObjectURL(file);
 
-  setUploadedImage(url);
-  setUploadedImageFile(file);
+  const [readyToContinue,
+    setReadyToContinue] =
+    useState(false);
 
-  setValidationResult(null);
-  setReadyToContinue(false); // 🔥 reset
-  setStage("processing");
+  const [transitioning,
+    setTransitioning] =
+    useState(false);
 
-  const formData = new FormData();
-  formData.append("image", file);
+  const [uploadedImage,
+    setUploadedImage] =
+    useState(null);
 
-  const startTime = Date.now();
+  const [validationResult,
+    setValidationResult] =
+    useState(null);
 
-  try {
-    const res = await axios.post(`${BASE_URL}/analyze`, formData);
+  const [stage,
+    setStage] =
+    useState("landing");
 
-    console.log("FULL RESPONSE:", res.data);
+  const [step,
+    setStep] =
+    useState(1);
 
-    const elapsed = Date.now() - startTime;
-    const minScanTime = 2000 + Math.random() * 1500;
-    const remaining = Math.max(0, minScanTime - elapsed);
+  const [currentQuestion,
+    setCurrentQuestion] =
+    useState(null);
 
-    setTimeout(() => {
+  const [activeDiseases,
+    setActiveDiseases] =
+    useState([]);
 
-      // 🔥 SHOW RESULT OVERLAY
-      setValidationResult(res.data.isSkin);
+  const [sessionId,
+    setSessionId] =
+    useState(null);
 
-      // 🔥 WAIT BEFORE NEXT ACTION
+  const [loadingQuestion,
+    setLoadingQuestion] =
+    useState(false);
+
+  const [finalResult,
+    setFinalResult] =
+    useState(null);
+
+  // =====================================================
+  // IMAGE UPLOAD
+  // =====================================================
+
+  const handleUpload =
+    async (file) => {
+
+      // IMAGE PREVIEW
+
+      const imageBase64 =
+        await new Promise(
+          (resolve) => {
+
+            const reader =
+              new FileReader();
+
+            reader.onload = () =>
+              resolve(
+                reader.result
+              );
+
+            reader.readAsDataURL(
+              file
+            );
+          }
+        );
+
+      setUploadedImage(
+        imageBase64
+      );
+
+      setValidationResult(
+        null
+      );
+
+      setReadyToContinue(
+        false
+      );
+
+      setStage(
+        "processing"
+      );
+
+      const formData =
+        new FormData();
+
+      formData.append(
+        "image",
+        file
+      );
+
+      try {
+
+        // =====================================
+        // ANALYZE IMAGE
+        // =====================================
+
+        const res =
+          await axios.post(
+
+            `${BASE_URL}/analyze`,
+
+            formData
+          );
+
+        console.log(
+          "ANALYZE RESPONSE:",
+          res.data
+        );
+
+        // =====================================
+        // MOCK SKIN VALIDATION
+        // =====================================
+
+        setTimeout(() => {
+
+          setValidationResult(
+            true
+          );
+
+          setTimeout(() => {
+
+            setCurrentQuestion(
+              res.data.question
+            );
+
+            setSessionId(
+              res.data.sessionId
+            );
+
+            setActiveDiseases(
+              res.data
+                .activeDiseases || []
+            );
+
+            setStep(1);
+
+            setReadyToContinue(
+              true
+            );
+
+          }, 1200);
+
+        }, 2000);
+
+      } catch (err) {
+
+        console.error(err);
+
+        setStage("landing");
+      }
+    };
+
+  // =====================================================
+  // CONTINUE
+  // =====================================================
+
+  const handleContinue =
+    () => {
+
+      setTransitioning(true);
+
       setTimeout(() => {
 
-        if (res.data?.isSkin === false) {
-          setStage("validationResult");
+        setStage(
+          "loadingQuestions"
+        );
+
+        setTransitioning(
+          false
+        );
+
+        setTimeout(() => {
+
+          setStage(
+            "questionnaire"
+          );
+
+        }, 1200);
+
+      }, 400);
+    };
+
+  // =====================================================
+  // QUESTION FLOW
+  // =====================================================
+
+  const handleNext =
+    async (answer) => {
+
+      if (!currentQuestion)
+        return;
+
+      setLoadingQuestion(
+        true
+      );
+
+      try {
+
+        // =====================================
+        // SEND ANSWER
+        // =====================================
+
+        const res =
+          await axios.post(
+
+            `${BASE_URL}/answer?sessionId=${sessionId}&signal=${currentQuestion.key}&answer=${answer}`
+          );
+
+        const data =
+          res.data;
+
+        console.log(
+          "ANSWER RESPONSE:",
+          data
+        );
+
+        setLoadingQuestion(
+          false
+        );
+
+        // =====================================
+        // FINAL RESULT
+        // =====================================
+
+        if (data.finished) {
+
+          setFinalResult(
+            data
+          );
+
+          setStage(
+            "result"
+          );
+
           return;
         }
 
-        // ❌ REMOVE auto navigation
-        // setStage("questionnaire");
+        // =====================================
+        // NEXT QUESTION
+        // =====================================
 
-        // 🔥 STORE DATA BUT DON'T MOVE
-        setCandidates(res.data.candidates || []);
-        setCurrentQuestion(res.data.nextQuestion);
+        if (data.question) {
 
-        setStep(1);
-        setAnswers([]);
-        setAskedQuestions([]);
+          setCurrentQuestion(
+            data.question
+          );
 
-        // ✅ SHOW CONTINUE BUTTON
-        setReadyToContinue(true);
+          setActiveDiseases(
+            data
+              .activeDiseases || []
+          );
 
-      }, 1500);
+          setStep(
+            (prev) =>
+              prev + 1
+          );
 
-    }, remaining);
+          return;
+        }
 
-  } catch (err) {
-    console.error(err);
-    setStage("landing");
-  }
-};
-  // =====================================================
-  // 🔹 After validation → Analyze
-  // =====================================================
- const handleContinue = () => {
-  setTransitioning(true);
+      } catch (err) {
 
-  // first fade out current screen
-  setTimeout(() => {
-    setStage("loadingQuestions");
-    setTransitioning(false);
+        console.error(err);
 
-    // show loader for realistic delay
-    setTimeout(() => {
-      setStage("questionnaire");
-    }, 1200); // adjust 1–2s
-  }, 400);
-};
-
-  // =====================================================
-  // 🔹 Question Loop
-  // =====================================================
-  const handleNext = async (answer) => {
-
-    const updatedAnswers = [...answers, answer];
-    setAnswers(updatedAnswers);
-
-    const payload = {
-      question: currentQuestion,
-      answer: answer,
-      askedQuestions: askedQuestions,
-      candidates: candidates
+        setLoadingQuestion(
+          false
+        );
+      }
     };
-
-    try {
-      const res = await axios.post(`${BASE_URL}/answer`, payload);
-
-      setCandidates(res.data.candidates || []);
-      setAskedQuestions([...askedQuestions, currentQuestion]);
-
-      // ================= FINAL RESULT =================
-      if (res.data.stage === "final_result") {
-        setFinalResult(res.data);
-        setStage("result");
-        return;
-      }
-
-      // ================= MAX QUESTIONS FAILSAFE =================
-      if (updatedAnswers.length >= 10) {
-        setFinalResult(null); // triggers "unable to diagnose"
-        setStage("result");
-        return;
-      }
-
-      // ================= CONTINUE =================
-      setCurrentQuestion(res.data.nextQuestion);
-      setStep((prev) => prev + 1);
-
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   // =====================================================
   // UI
   // =====================================================
-  return (
-    <div className="relative min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-black text-white">
 
-      {/* Background */}
+  return (
+
+    <div className="
+      relative min-h-screen
+      bg-gradient-to-br
+      from-indigo-950
+      via-purple-950
+      to-black
+      text-white
+      overflow-hidden
+    ">
+
+      {/* BACKGROUND */}
+
       <FloatingGerms />
 
-      {/* Foreground */}
-      <div className="relative z-10">
+      {/* LOADING */}
 
-   <AnimatePresence mode="wait">
-  {stage === "landing" && (
-    <Landing key="landing" onUpload={handleUpload} />
-  )}
+      {loadingQuestion && (
 
-  {stage === "processing" && (
-    <ProcessingScreen
-      key="processing"
-      image={uploadedImage}
-      result={validationResult}
-      readyToContinue={readyToContinue}
-      onContinue={handleContinue}
-      transitioning={transitioning}
-    />
-  )}
+        <div className="
+          fixed inset-0 z-50
+          bg-black/60
+          backdrop-blur-md
+          flex items-center justify-center
+        ">
 
-  {stage === "validationResult" && (
-    <ValidationResult
-      key="validation"
-      valid={isSkin}
-      onRetry={() => setStage("landing")}
-    />
-  )}
+          <motion.div
 
-  {stage === "questionnaire" && (
-    <Questionnaire
-      key="questionnaire"
-      question={currentQuestion}
-      step={step}
-      total={10}
-      onNext={handleNext}
-    />
-  )}
+            initial={{
+              opacity: 0,
+              scale: 0.95
+            }}
 
-  {stage === "result" && (
-    <ResultScreen
-      key="result"
-      data={finalResult}
-      image={uploadedImage}
-      onRestart={() => setStage("landing")}
-    />
-  )}
-  {stage === "loadingQuestions" && (
-  <LoadingQuestions key="loading" />
-)}
-</AnimatePresence>
+            animate={{
+              opacity: 1,
+              scale: 1
+            }}
+
+            className="
+              bg-white/10
+              border border-white/10
+              rounded-3xl
+              px-10 py-8
+              shadow-2xl
+            "
+          >
+
+            <div className="
+              text-2xl
+              text-white
+              animate-pulse
+            ">
+              AI analyzing
+              clinical patterns...
+            </div>
+
+          </motion.div>
+
+        </div>
+      )}
+
+      {/* MAIN */}
+
+      <div className="
+        relative z-10
+      ">
+
+        <AnimatePresence
+          mode="wait"
+        >
+
+          {/* LANDING */}
+
+          {stage ===
+            "landing" && (
+
+            <Landing
+              key="landing"
+              onUpload={
+                handleUpload
+              }
+            />
+          )}
+
+          {/* PROCESSING */}
+
+          {stage ===
+            "processing" && (
+
+            <ProcessingScreen
+
+              key="processing"
+
+              image={
+                uploadedImage
+              }
+
+              result={
+                validationResult
+              }
+
+              readyToContinue={
+                readyToContinue
+              }
+
+              onContinue={
+                handleContinue
+              }
+
+              transitioning={
+                transitioning
+              }
+            />
+          )}
+
+          {/* VALIDATION */}
+
+          {stage ===
+            "validationResult" && (
+
+            <ValidationResult
+
+              key="validation"
+
+              valid={
+                validationResult
+              }
+
+              onRetry={() =>
+                setStage(
+                  "landing"
+                )
+              }
+            />
+          )}
+
+          {/* LOADING QUESTIONS */}
+
+          {stage ===
+            "loadingQuestions" && (
+
+            <LoadingQuestions
+              key="loading"
+            />
+          )}
+
+          {/* QUESTIONNAIRE */}
+
+          {stage ===
+            "questionnaire" && (
+
+            <Questionnaire
+
+              key="questionnaire"
+
+              question={
+                currentQuestion
+              }
+
+              step={step}
+
+              total={10}
+
+              activeDiseases={
+                activeDiseases
+              }
+
+              onNext={
+                handleNext
+              }
+            />
+          )}
+
+          {/* RESULT */}
+
+          {stage ===
+            "result" && (
+
+            <ResultScreen
+
+              key="result"
+
+              result={
+                finalResult
+              }
+
+              image={
+                uploadedImage
+              }
+
+              onRestart={() => {
+
+                setStage(
+                  "landing"
+                );
+
+                setFinalResult(
+                  null
+                );
+
+                setCurrentQuestion(
+                  null
+                );
+
+                setStep(1);
+
+                setUploadedImage(
+                  null
+                );
+
+                setSessionId(
+                  null
+                );
+              }}
+            />
+          )}
+
+        </AnimatePresence>
+
       </div>
+
     </div>
   );
 }

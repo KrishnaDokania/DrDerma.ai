@@ -3,13 +3,18 @@ package ai.drderma.backend.model;
 public class ImageCandidate {
 
     private String disease;
-    private double similarity;
 
-    // REQUIRED
+    private Double similarity;
+
+    private VisualTraits traits;
+
     public ImageCandidate() {
     }
 
-    public ImageCandidate(String disease, double similarity) {
+    public ImageCandidate(
+            String disease,
+            Double similarity
+    ) {
         this.disease = disease;
         this.similarity = similarity;
     }
@@ -22,11 +27,19 @@ public class ImageCandidate {
         this.disease = disease;
     }
 
-    public double getSimilarity() {
+    public Double getSimilarity() {
         return similarity;
     }
 
-    public void setSimilarity(double similarity) {
+    public void setSimilarity(Double similarity) {
         this.similarity = similarity;
+    }
+
+    public VisualTraits getTraits() {
+        return traits;
+    }
+
+    public void setTraits(VisualTraits traits) {
+        this.traits = traits;
     }
 }

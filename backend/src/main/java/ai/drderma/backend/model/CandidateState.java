@@ -1,16 +1,34 @@
 package ai.drderma.backend.model;
+
 import java.util.*;
 
 public class CandidateState {
 
     private final String disease;
+
     private final double similarityScore;
-private final Map<String, Integer> questionImpact = new HashMap<>();
+
+    private VisualTraits visualTraits;
+
     private double questionScore = 0.0;
 
-    public CandidateState(String disease, double similarityScore) {
+    private final Map<String, Integer>
+            questionImpact =
+            new HashMap<>();
+
+    private int questionsAnswered = 0;
+
+    private double contradictionPenalty = 0.0;
+
+    public CandidateState(
+            String disease,
+            double similarityScore
+    ) {
+
         this.disease = disease;
-        this.similarityScore = similarityScore;
+
+        this.similarityScore =
+                similarityScore;
     }
 
     public String getDisease() {
@@ -21,37 +39,103 @@ private final Map<String, Integer> questionImpact = new HashMap<>();
         return similarityScore;
     }
 
+    public VisualTraits getVisualTraits() {
+        return visualTraits;
+    }
+
+    public void setVisualTraits(
+            VisualTraits visualTraits
+    ) {
+
+        this.visualTraits = visualTraits;
+    }
+
     public double getQuestionScore() {
         return questionScore;
     }
 
-    public void addQuestionScore(double delta) {
-        this.questionScore += delta;
+    public void addQuestionScore(
+            double delta
+    ) {
+
+        questionScore += delta;
+
+        questionsAnswered++;
+
+        if (delta < 0) {
+
+            contradictionPenalty +=
+                    Math.abs(delta) * 0.5;
+        }
+    }
+
+    public void recordImpact(
+            String question,
+            int delta
+    ) {
+
+        questionImpact.put(
+                question,
+                delta
+        );
+    }
+
+    public Map<String, Integer>
+    getQuestionImpact() {
+
+        return questionImpact;
     }
 
     public double getFinalScore() {
-        // 60% image similarity
-        // 40% question reasoning
-        return 0.6 * similarityScore + 0.4 * normalizeQuestionScore();
+
+        double imageWeight;
+
+        double questionWeight;
+
+        if (questionsAnswered <= 2) {
+
+            imageWeight = 0.75;
+            questionWeight = 0.25;
+
+        }
+
+        else if (questionsAnswered <= 5) {
+
+            imageWeight = 0.55;
+            questionWeight = 0.45;
+        }
+
+        else {
+
+            imageWeight = 0.35;
+            questionWeight = 0.65;
+        }
+
+        double weightedImage =
+                similarityScore * imageWeight;
+
+        double weightedQuestions =
+                normalizeQuestionScore()
+                        * questionWeight;
+
+        return weightedImage
+                + weightedQuestions
+                - contradictionPenalty;
     }
 
- private double normalizeQuestionScore() {
-    // Soft clamp
-    double normalized = questionScore / 10.0;
+    private double normalizeQuestionScore() {
 
-    if (normalized > 0.5) return 0.5;
-    if (normalized < -0.5) return -0.5;
+        double normalized =
+                questionScore / 10.0;
 
-    return normalized;
-}
-public void recordImpact(String question, int delta) {
-    questionImpact.put(question, delta);
-}
-public Map<String, Integer> getQuestionImpact() {
-    return questionImpact;
-}
-public void setQuestionImpact(Map<String, Integer> impact) {
-    this.questionImpact.clear();
-    this.questionImpact.putAll(impact);
-}
+        if (normalized > 1.0) {
+            return 1.0;
+        }
+
+        if (normalized < -1.0) {
+            return -1.0;
+        }
+
+        return normalized;
+    }
 }
