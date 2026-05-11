@@ -312,30 +312,30 @@ public class TriageService {
     // =====================================================
     // ELIMINATION
     // =====================================================
+private void eliminateWeakCandidates(
+        List<CandidateState> ranked
+) {
 
-    private void eliminateWeakCandidates(
-            List<CandidateState> ranked
-    ) {
-
-        if (ranked.isEmpty()) {
-            return;
-        }
-
-        double top =
-                ranked.get(0)
-                        .getFinalScore();
-
-        ranked.removeIf(candidate -> {
-
-            double diff =
-                    top
-                            - candidate
-                            .getFinalScore();
-
-            return diff > 35;
-        });
+    if (ranked.isEmpty()) {
+        return;
     }
 
+    double top =
+            ranked.get(0)
+                    .getFinalScore();
+
+    ranked.removeIf(candidate -> {
+
+        double diff =
+                top
+                        - candidate
+                        .getFinalScore();
+
+        // MUCH SMALLER THRESHOLD
+
+        return diff > 1.5;
+    });
+}
     // =====================================================
     // STOPPING
     // =====================================================
@@ -358,7 +358,7 @@ public class TriageService {
 
         double gap = top - second;
 
-        return gap >= 25;
+        return gap >= 1.2;
     }
 
     // =====================================================

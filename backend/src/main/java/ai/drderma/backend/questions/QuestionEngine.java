@@ -62,32 +62,74 @@ public class QuestionEngine {
                         topCandidates
                 );
 
-        Set<String> possibleQuestions =
-                new HashSet<>();
+        Map<String, Integer>
+        questionFrequency =
+        new HashMap<>();
 
-        for (CandidateState candidate :
-                topCandidates) {
+for (
+        CandidateState candidate :
+        topCandidates
+) {
 
-            DiseaseProfile profile =
-                    knowledgeBase.get(
-                            candidate.getDisease()
-                    );
-
-            if (profile == null) {
-                continue;
-            }
-
-            possibleQuestions.addAll(
-
-                    profile.getSignalWeights()
-                            .keySet()
+    DiseaseProfile profile =
+            knowledgeBase.get(
+                    candidate.getDisease()
             );
+
+    if (profile == null) {
+        continue;
+    }
+
+    for (
+            String question :
+            profile.getSignalWeights()
+                    .keySet()
+    ) {
+
+        if (
+                askedQuestions.contains(
+                        question
+                )
+        ) {
+
+            continue;
         }
 
-        possibleQuestions.removeAll(
-                askedQuestions
-        );
+        questionFrequency.merge(
 
+                question,
+
+                1,
+
+                Integer::sum
+        );
+    }
+}
+
+Set<String> possibleQuestions =
+
+        questionFrequency
+
+                .entrySet()
+
+                .stream()
+
+                .sorted(
+                        (a, b) -> Integer.compare(
+                                b.getValue(),
+                                a.getValue()
+                        )
+                )
+
+                .map(
+                        Map.Entry::getKey
+                )
+
+                .collect(
+                        Collectors.toCollection(
+                                LinkedHashSet::new
+                        )
+                );
         String bestQuestion = null;
 
         double bestScore = -1;
@@ -176,6 +218,17 @@ public class QuestionEngine {
                 bestQuestion = question;
             }
         }
+        if (
+        bestQuestion == null
+        &&
+        !possibleQuestions.isEmpty()
+) {
+
+    bestQuestion =
+            possibleQuestions
+                    .iterator()
+                    .next();
+}
 
         return bestQuestion;
     }
