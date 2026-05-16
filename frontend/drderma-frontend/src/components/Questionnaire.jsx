@@ -19,15 +19,18 @@ export default function Questionnaire({
 
   const progress =
     (step / total) * 100;
-
+console.log(question);
   const renderInput = () => {
+   const type =
+  question?.type?.toUpperCase();
 
+console.log(type);
     // =====================================
     // BOOLEAN
     // =====================================
 
     if (
-      question?.type === "BOOLEAN"
+      type === "BOOLEAN"
     ) {
 
       return (
@@ -78,7 +81,7 @@ export default function Questionnaire({
     // =====================================
 
     if (
-      question?.type === "ENUM"
+      type === "ENUM"
     ) {
 
       return (
@@ -134,7 +137,7 @@ export default function Questionnaire({
     // =====================================
 
     if (
-      question?.type === "NUMBER"
+      type === "NUMBER"
     ) {
 
       return (
@@ -193,6 +196,10 @@ export default function Questionnaire({
       />
     );
   };
+  console.log(
+  "QUESTION:",
+  question
+);
 
   return (
 

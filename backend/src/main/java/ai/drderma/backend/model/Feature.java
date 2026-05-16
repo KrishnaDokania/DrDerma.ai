@@ -8,25 +8,32 @@ public class Feature {
 
     private String question;
 
-  private FeatureType type;
+private String type;
 
     private List<String> options;
 
     public Feature() {
     }
 
-    public Feature(
-        String key,
-        String question,
-        FeatureType type,
-        List<String> options
-){
+public Feature(
 
-        this.key = key;
-        this.question = question;
-        this.type = type;
-        this.options = options;
-    }
+        String key,
+
+        String question,
+
+        FeatureType type,
+
+        List<String> options
+) {
+
+    this.key = key;
+
+    this.question = question;
+
+    this.type = type.name();
+
+    this.options = options;
+}
 
     public String getKey() {
         return key;
@@ -44,15 +51,13 @@ public class Feature {
         this.question = question;
     }
 
-   public FeatureType getType() {
-        return type;
-    }
+  public String getType() {
+    return type;
+}
 
- public void setType(
-        FeatureType type
-) {
-        this.type = type;
-    }
+public void setType(String type) {
+    this.type = type;
+}
 
     public List<String> getOptions() {
         return options;

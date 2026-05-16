@@ -12,15 +12,16 @@ import java.util.Set;
 @Component
 public class FeatureRepository {
 
-    private final Map<String, Feature> features;
+    private final Map<String, Feature>
+            features;
 
     public FeatureRepository() {
 
         features = new HashMap<>();
 
-        /*
-         * UNIVERSAL FEATURES
-         */
+        // =====================================================
+        // UNIVERSAL
+        // =====================================================
 
         features.put(
                 "itching",
@@ -28,27 +29,10 @@ public class FeatureRepository {
                         "itching",
                         "Does the affected area feel itchy?",
                         FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        features.put(
-                "redness",
-                new Feature(
-                        "redness",
-                        "Is the affected area red or inflamed?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        features.put(
-                "pain",
-                new Feature(
-                        "pain",
-                        "Is the affected area painful?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
+                        List.of(
+                                "yes",
+                                "no"
+                        )
                 )
         );
 
@@ -56,69 +40,14 @@ public class FeatureRepository {
                 "burning",
                 new Feature(
                         "burning",
-                        "Do you feel a burning sensation?",
+                        "Do you experience a burning sensation?",
                         FeatureType.BOOLEAN,
-                        List.of("yes", "no")
+                        List.of(
+                                "yes",
+                                "no"
+                        )
                 )
         );
-
-        features.put(
-                "dryness",
-                new Feature(
-                        "dryness",
-                        "Does the skin appear dry or rough?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        /*
-         * ACNE RELATED
-         */
-
-        features.put(
-                "pus_filled_pimples",
-                new Feature(
-                        "pus_filled_pimples",
-                        "Are there pus-filled pimples present?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        features.put(
-                "blackheads",
-                new Feature(
-                        "blackheads",
-                        "Do you notice blackheads or clogged pores?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        features.put(
-                "oily_skin",
-                new Feature(
-                        "oily_skin",
-                        "Is your skin unusually oily?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        features.put(
-                "deep_nodules",
-                new Feature(
-                        "deep_nodules",
-                        "Are there deep painful lumps beneath the skin?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        /*
-         * ECZEMA / DERMATITIS
-         */
 
         features.put(
                 "scaling",
@@ -126,85 +55,27 @@ public class FeatureRepository {
                         "scaling",
                         "Is there visible scaling or flaking?",
                         FeatureType.BOOLEAN,
-                        List.of("yes", "no")
+                        List.of(
+                                "yes",
+                                "no"
+                        )
                 )
         );
 
-        features.put(
-                "oozing",
-                new Feature(
-                        "oozing",
-                        "Is there any fluid discharge or oozing?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        features.put(
-                "crusting",
-                new Feature(
-                        "crusting",
-                        "Has the skin developed crusts or scabs?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        features.put(
-                "skin_thickening",
-                new Feature(
-                        "skin_thickening",
-                        "Does the skin appear thickened from scratching?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        /*
-         * PSORIASIS
-         */
-
-        features.put(
-                "silvery_scales",
-                new Feature(
-                        "silvery_scales",
-                        "Are the scales thick and silvery in appearance?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        features.put(
-                "well_defined_border",
-                new Feature(
-                        "well_defined_border",
-                        "Are the edges sharply defined?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        features.put(
-                "joint_pain",
-                new Feature(
-                        "joint_pain",
-                        "Do you also experience joint pain or stiffness?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        /*
-         * FUNGAL INFECTIONS
-         */
+        // =====================================================
+        // TINEA
+        // =====================================================
 
         features.put(
                 "ring_shape",
                 new Feature(
                         "ring_shape",
-                        "Does the rash form a circular or ring-like pattern?",
+                        "Does the rash form a circular or ring-shaped pattern?",
                         FeatureType.BOOLEAN,
-                        List.of("yes", "no")
+                        List.of(
+                                "yes",
+                                "no"
+                        )
                 )
         );
 
@@ -214,125 +85,210 @@ public class FeatureRepository {
                         "central_clearing",
                         "Is the center clearer than the outer border?",
                         FeatureType.BOOLEAN,
-                        List.of("yes", "no")
+                        List.of(
+                                "yes",
+                                "no"
+                        )
                 )
         );
 
         features.put(
-                "sweating_trigger",
+                "border_elevation",
                 new Feature(
-                        "sweating_trigger",
-                        "Does sweating worsen the condition?",
+                        "border_elevation",
+                        "Are the outer edges raised compared to the center?",
                         FeatureType.BOOLEAN,
-                        List.of("yes", "no")
+                        List.of(
+                                "yes",
+                                "no"
+                        )
                 )
         );
 
         features.put(
-                "hair_loss_patch",
+                "sweating",
                 new Feature(
-                        "hair_loss_patch",
-                        "Are there patchy areas of hair loss?",
+                        "sweating",
+                        "Does sweating or heat worsen the condition?",
                         FeatureType.BOOLEAN,
-                        List.of("yes", "no")
+                        List.of(
+                                "yes",
+                                "no"
+                        )
                 )
         );
 
-        /*
-         * VIRAL CONDITIONS
-         */
+        // =====================================================
+        // PSORIASIS
+        // =====================================================
 
         features.put(
-                "blisters",
+                "silvery_scale",
                 new Feature(
-                        "blisters",
-                        "Are there fluid-filled blisters present?",
+                        "silvery_scale",
+                        "Are thick silvery-white scales visible?",
                         FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        features.put(
-                "grouped_lesions",
-                new Feature(
-                        "grouped_lesions",
-                        "Are the lesions grouped together closely?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
+                        List.of(
+                                "yes",
+                                "no"
+                        )
                 )
         );
 
         features.put(
-                "fever",
+                "thick_plaques",
                 new Feature(
-                        "fever",
-                        "Have you experienced fever recently?",
+                        "thick_plaques",
+                        "Are the lesions thick and raised?",
                         FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        /*
-         * SCABIES
-         */
-
-        features.put(
-                "night_itching",
-                new Feature(
-                        "night_itching",
-                        "Does the itching become worse at night?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
+                        List.of(
+                                "yes",
+                                "no"
+                        )
                 )
         );
 
         features.put(
-                "family_spread",
+                "nail_changes",
                 new Feature(
-                        "family_spread",
-                        "Do other family members have similar itching?",
+                        "nail_changes",
+                        "Are there nail changes like pitting or thickening?",
                         FeatureType.BOOLEAN,
-                        List.of("yes", "no")
-                )
-        );
-
-        /*
-         * ROSACEA / MELASMA
-         */
-
-        features.put(
-                "facial_flushing",
-                new Feature(
-                        "facial_flushing",
-                        "Does your face flush or become red easily?",
-                        FeatureType.BOOLEAN,
-                        List.of("yes", "no")
+                        List.of(
+                                "yes",
+                                "no"
+                        )
                 )
         );
 
         features.put(
-                "sun_trigger",
+                "family_history",
                 new Feature(
-                        "sun_trigger",
-                        "Does sunlight worsen the condition?",
+                        "family_history",
+                        "Does anyone in your family have a similar skin condition?",
                         FeatureType.BOOLEAN,
-                        List.of("yes", "no")
+                        List.of(
+                                "yes",
+                                "no"
+                        )
+                )
+        );
+
+        // =====================================================
+        // ECZEMA
+        // =====================================================
+
+        features.put(
+                "oozing",
+                new Feature(
+                        "oozing",
+                        "Is there fluid discharge or oozing from the skin?",
+                        FeatureType.BOOLEAN,
+                        List.of(
+                                "yes",
+                                "no"
+                        )
                 )
         );
 
         features.put(
-                "pigmentation",
+                "dry_skin",
                 new Feature(
-                        "pigmentation",
-                        "Are there darker patches or pigmentation changes?",
+                        "dry_skin",
+                        "Does the skin appear very dry or rough?",
                         FeatureType.BOOLEAN,
-                        List.of("yes", "no")
+                        List.of(
+                                "yes",
+                                "no"
+                        )
                 )
         );
 
-        /*
-         * LOCATION
-         */
+        features.put(
+                "allergy_history",
+                new Feature(
+                        "allergy_history",
+                        "Do you have a history of allergies, asthma, or eczema?",
+                        FeatureType.BOOLEAN,
+                        List.of(
+                                "yes",
+                                "no"
+                        )
+                )
+        );
+
+        // =====================================================
+        // ACNE
+        // =====================================================
+
+        features.put(
+                "oily_skin",
+                new Feature(
+                        "oily_skin",
+                        "Does your skin appear unusually oily?",
+                        FeatureType.BOOLEAN,
+                        List.of(
+                                "yes",
+                                "no"
+                        )
+                )
+        );
+
+        features.put(
+                "blackheads",
+                new Feature(
+                        "blackheads",
+                        "Are blackheads or clogged pores visible?",
+                        FeatureType.BOOLEAN,
+                        List.of(
+                                "yes",
+                                "no"
+                        )
+                )
+        );
+
+        features.put(
+                "pus_filled_bumps",
+                new Feature(
+                        "pus_filled_bumps",
+                        "Are there pus-filled bumps or pimples?",
+                        FeatureType.BOOLEAN,
+                        List.of(
+                                "yes",
+                                "no"
+                        )
+                )
+        );
+
+        features.put(
+                "painful_lesions",
+                new Feature(
+                        "painful_lesions",
+                        "Are the lesions painful or tender?",
+                        FeatureType.BOOLEAN,
+                        List.of(
+                                "yes",
+                                "no"
+                        )
+                )
+        );
+
+        features.put(
+                "teenager",
+                new Feature(
+                        "teenager",
+                        "Are you currently in your teenage years?",
+                        FeatureType.BOOLEAN,
+                        List.of(
+                                "yes",
+                                "no"
+                        )
+                )
+        );
+
+        // =====================================================
+        // LOCATION
+        // =====================================================
 
         features.put(
                 "location",
@@ -350,33 +306,49 @@ public class FeatureRepository {
                                 "groin",
                                 "trunk",
                                 "neck",
-                                "multiple areas"
+                                "multiple_areas"
                         )
                 )
         );
 
-        /*
-         * SEVERITY
-         */
+        // =====================================================
+        // DURATION
+        // =====================================================
 
         features.put(
-                "itch_severity",
+                "duration",
                 new Feature(
-                        "itch_severity",
-                        "How severe is the itching?",
-                        FeatureType.NUMBER,
-                        List.of()
+                        "duration",
+                        "How long has the condition been present?",
+                        FeatureType.ENUM,
+                        List.of(
+                                "days",
+                                "weeks",
+                                "months",
+                                "years"
+                        )
                 )
         );
     }
 
+    // =====================================================
+    // GET FEATURE
+    // =====================================================
+
     public Feature getFeature(
             String key
     ) {
+
         return features.get(key);
     }
 
-    public Set<String> getAllFeatures() {
+    // =====================================================
+    // GET ALL FEATURES
+    // =====================================================
+
+    public Set<String>
+    getAllFeatures() {
+
         return features.keySet();
     }
 }

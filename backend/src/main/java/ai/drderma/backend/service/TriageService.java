@@ -230,9 +230,15 @@ public class TriageService {
         // STOP CONDITION
         // =====================================
 
-        if (
-                shouldStop(ranked)
-        ) {
+if (
+
+    session.getAskedSignals()
+            .size() >= 6
+
+    &&
+
+    shouldStop(ranked)
+){
 
             return buildFinalResult(
 
@@ -340,27 +346,33 @@ private void eliminateWeakCandidates(
     // STOPPING
     // =====================================================
 
-    private boolean shouldStop(
-            List<CandidateState> ranked
+   private boolean shouldStop(
+        List<CandidateState> ranked
+) {
+
+    if (
+            ranked == null
+            || ranked.size() < 2
     ) {
 
-        if (ranked.size() <= 1) {
-            return true;
-        }
-
-        double top =
-                ranked.get(0)
-                        .getFinalScore();
-
-        double second =
-                ranked.get(1)
-                        .getFinalScore();
-
-        double gap = top - second;
-
-        return gap >= 1.2;
+        return false;
     }
 
+    double top =
+            ranked.get(0)
+                    .getFinalScore();
+
+    double second =
+            ranked.get(1)
+                    .getFinalScore();
+
+    double gap =
+            top - second;
+
+    // MUCH HARDER TO STOP
+
+    return gap >= 5.0;
+}
     // =====================================================
     // FINAL RESULT
     // =====================================================
@@ -381,11 +393,12 @@ private void eliminateWeakCandidates(
                         ? ranked.get(1)
                         : top;
 
-        double confidence =
-                calculateConfidence(
-                        top,
-                        second
-                );
+     double gap =
+        top.getFinalScore()
+                - second.getFinalScore();
+
+double confidence =
+ Math.min(95,45+(gap * 12)+(session.getAskedSignals().size() * 4));
 
         Map<String, Object>
                 mostLikely =
