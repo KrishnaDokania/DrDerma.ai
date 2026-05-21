@@ -6,63 +6,30 @@ import java.util.Map;
 public class DiseaseProfile {
 
     // =====================================================
-    // BASIC INFO
+    // BASIC
     // =====================================================
 
     private final String disease;
 
     // =====================================================
-    // DISEASE CATEGORY
+    // REASONING METADATA
     // =====================================================
-
-    // fungal
-    // inflammatory
-    // autoimmune
-    // acneiform
-    // pigmentary
 
     private final String category;
 
-    // =====================================================
-    // VISUAL FAMILY
-    // =====================================================
-
-    // annular_fungal
-    // scaly_plaque
-    // inflammatory_patch
-    // papulopustular
-    // pigmentary
-
     private final String visualFamily;
 
-    // =====================================================
-    // COMMON BODY LOCATIONS
-    // =====================================================
-
-    private final List<String>
-            bodyLocations;
-
-    // =====================================================
-    // MORPHOLOGY
-    // =====================================================
-
-    private final List<String>
-            morphology;
-
-    // =====================================================
-    // DIAGNOSTIC IMPORTANCE
-    // =====================================================
+    private final List<String> morphology;
 
     private final int rarityWeight;
 
     // =====================================================
-    // SIGNAL WEIGHTS
+    // SIGNALS
     // =====================================================
 
-    private final Map<
-            String,
-            Map<String, Integer>
-            > signalWeights;
+    private final Map<String,
+            Map<String, Integer>>
+            signalWeights;
 
     // =====================================================
     // CONSTRUCTOR
@@ -76,13 +43,12 @@ public class DiseaseProfile {
 
             String visualFamily,
 
-            List<String> bodyLocations,
-
             List<String> morphology,
 
             int rarityWeight,
 
-            Map<String, Map<String, Integer>>
+            Map<String,
+                    Map<String, Integer>>
                     signalWeights
     ) {
 
@@ -90,17 +56,11 @@ public class DiseaseProfile {
 
         this.category = category;
 
-        this.visualFamily =
-                visualFamily;
+        this.visualFamily = visualFamily;
 
-        this.bodyLocations =
-                bodyLocations;
+        this.morphology = morphology;
 
-        this.morphology =
-                morphology;
-
-        this.rarityWeight =
-                rarityWeight;
+        this.rarityWeight = rarityWeight;
 
         this.signalWeights =
                 signalWeights;
@@ -122,15 +82,7 @@ public class DiseaseProfile {
         return visualFamily;
     }
 
-    public List<String>
-    getBodyLocations() {
-
-        return bodyLocations;
-    }
-
-    public List<String>
-    getMorphology() {
-
+    public List<String> getMorphology() {
         return morphology;
     }
 
@@ -138,12 +90,10 @@ public class DiseaseProfile {
         return rarityWeight;
     }
 
-    public Map<
-            String,
-            Map<String, Integer>
-            > getSignalWeights() {
+    public Map<String,
+            Map<String, Integer>>
+    getSignalWeights() {
 
         return signalWeights;
     }
 }
-

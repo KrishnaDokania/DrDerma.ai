@@ -10,309 +10,334 @@ import java.util.Map;
 public class DiseaseKnowledgeBase {
 
     private final Map<String, DiseaseProfile>
-            profiles = Map.of(
+            profiles =
+            Map.of(
 
-            // =========================================
-            // TINEA CORPORIS
-            // =========================================
-
-            "tinea_corporis",
-
-            new DiseaseProfile(
+                    // =====================================================
+                    // TINEA CORPORIS
+                    // =====================================================
 
                     "tinea_corporis",
 
-                    "fungal",
+                    new DiseaseProfile(
 
-                    "annular_fungal",
+                            "tinea_corporis",
 
-                    List.of(
-                            "groin",
-                            "arms",
-                            "legs",
-                            "trunk"
-                    ),
+                            "fungal",
 
-                    List.of(
-                            "ring",
-                            "scaly",
-                            "circular",
-                            "central_clearing"
-                    ),
+                            "ring_scales",
 
-                    5,
-
-                    Map.of(
-
-                            "ring_shape",
-                            Map.of(
-                                    "yes", 5,
-                                    "no", -4
+                            List.of(
+                                    "ring",
+                                    "circular",
+                                    "scaly"
                             ),
 
-                            "central_clearing",
-                            Map.of(
-                                    "yes", 5,
-                                    "no", -3
-                            ),
+                            2,
 
-                            "itching",
                             Map.of(
-                                    "yes", 3,
-                                    "no", -1
-                            ),
 
-                            "scaling",
-                            Map.of(
-                                    "yes", 2,
-                                    "no", -2
-                            ),
+                                    "ring_shape",
+                                    Map.of(
+                                            "yes", 5,
+                                            "no", -4
+                                    ),
 
-                            "border_elevation",
-                            Map.of(
-                                    "yes", 4,
-                                    "no", -2
-                            ),
+                                    "central_clearing",
+                                    Map.of(
+                                            "yes", 5,
+                                            "no", -4
+                                    ),
 
-                            "sweating",
-                            Map.of(
-                                    "yes", 3,
-                                    "no", 0
-                            ),
+                                    "border_elevation",
+                                    Map.of(
+                                            "yes", 4,
+                                            "no", -2
+                                    ),
 
-                            "location",
-                            Map.of(
-                                    "groin", 4,
-                                    "arms", 3,
-                                    "legs", 3,
-                                    "face", -2
+                                    "sweating",
+                                    Map.of(
+                                            "yes", 3,
+                                            "no", 0
+                                    ),
+
+                                    "itching",
+                                    Map.of(
+                                            "yes", 3,
+                                            "no", -1
+                                    ),
+
+                                    "scaling",
+                                    Map.of(
+                                            "yes", 2,
+                                            "no", -2
+                                    ),
+
+                                    "location",
+                                    Map.of(
+                                            "groin", 5,
+                                            "arms", 2,
+                                            "legs", 2,
+                                            "trunk", 2,
+                                            "face", -1
+                                    ),
+
+                                    "duration",
+                                    Map.of(
+                                            "days", -2,
+                                            "weeks", 3,
+                                            "months", 1,
+                                            "years", -2
+                                    )
                             )
-                    )
-            ),
+                    ),
 
-            // =========================================
-            // PSORIASIS
-            // =========================================
-
-            "psoriasis_vulgaris",
-
-            new DiseaseProfile(
+                    // =====================================================
+                    // PSORIASIS
+                    // =====================================================
 
                     "psoriasis_vulgaris",
 
-                    "autoimmune",
+                    new DiseaseProfile(
 
-                    "scaly_plaque",
+                            "psoriasis_vulgaris",
 
-                    List.of(
-                            "scalp",
-                            "elbows",
-                            "knees",
-                            "trunk"
-                    ),
-
-                    List.of(
-                            "plaque",
-                            "silvery",
-                            "thick",
-                            "scaly"
-                    ),
-
-                    5,
-
-                    Map.of(
-
-                            "silvery_scale",
-                            Map.of(
-                                    "yes", 5,
-                                    "no", -4
-                            ),
+                            "autoimmune",
 
                             "thick_plaques",
-                            Map.of(
-                                    "yes", 5,
-                                    "no", -3
+
+                            List.of(
+                                    "plaque",
+                                    "silvery",
+                                    "thick"
                             ),
 
-                            "nail_changes",
-                            Map.of(
-                                    "yes", 4,
-                                    "no", 0
-                            ),
+                            3,
 
-                            "family_history",
                             Map.of(
-                                    "yes", 3,
-                                    "no", 0
-                            ),
 
-                            "scaling",
-                            Map.of(
-                                    "yes", 4,
-                                    "no", -3
-                            ),
+                                    "silvery_scale",
+                                    Map.of(
+                                            "yes", 6,
+                                            "no", -5
+                                    ),
 
-                            "location",
-                            Map.of(
-                                    "scalp", 4,
-                                    "elbows", 4,
-                                    "knees", 4
+                                    "thick_plaques",
+                                    Map.of(
+                                            "yes", 5,
+                                            "no", -4
+                                    ),
+
+                                    "nail_changes",
+                                    Map.of(
+                                            "yes", 5,
+                                            "no", 0
+                                    ),
+
+                                    "family_history",
+                                    Map.of(
+                                            "yes", 4,
+                                            "no", 0
+                                    ),
+
+                                    "scaling",
+                                    Map.of(
+                                            "yes", 4,
+                                            "no", -3
+                                    ),
+
+                                    "itching",
+                                    Map.of(
+                                            "yes", 1,
+                                            "no", 2
+                                    ),
+
+                                    "location",
+                                    Map.of(
+                                            "scalp", 5,
+                                            "knees", 5,
+                                            "elbows", 5,
+                                            "trunk", 2,
+                                            "groin", -4
+                                    ),
+
+                                    "duration",
+                                    Map.of(
+                                            "days", -3,
+                                            "weeks", 1,
+                                            "months", 3,
+                                            "years", 5
+                                    )
                             )
-                    )
-            ),
+                    ),
 
-            // =========================================
-            // ECZEMA
-            // =========================================
-
-            "eczema_atopic_dermatitis",
-
-            new DiseaseProfile(
+                    // =====================================================
+                    // ECZEMA
+                    // =====================================================
 
                     "eczema_atopic_dermatitis",
 
-                    "inflammatory",
+                    new DiseaseProfile(
 
-                    "inflammatory_patch",
+                            "eczema_atopic_dermatitis",
 
-                    List.of(
-                            "face",
-                            "arms",
-                            "legs",
-                            "neck"
-                    ),
+                            "inflammatory",
 
-                    List.of(
-                            "itchy",
-                            "inflamed",
-                            "patchy",
-                            "dry"
-                    ),
+                            "dry_patchy",
 
-                    4,
-
-                    Map.of(
-
-                            "itching",
-                            Map.of(
-                                    "yes", 5,
-                                    "no", -4
+                            List.of(
+                                    "dry",
+                                    "patchy",
+                                    "inflamed"
                             ),
 
-                            "oozing",
-                            Map.of(
-                                    "yes", 5,
-                                    "no", -2
-                            ),
+                            2,
 
-                            "burning",
                             Map.of(
-                                    "yes", 3,
-                                    "no", 0
-                            ),
 
-                            "dry_skin",
-                            Map.of(
-                                    "yes", 4,
-                                    "no", -1
-                            ),
+                                    "oozing",
+                                    Map.of(
+                                            "yes", 5,
+                                            "no", -1
+                                    ),
 
-                            "allergy_history",
-                            Map.of(
-                                    "yes", 4,
-                                    "no", 0
-                            ),
+                                    "dry_skin",
+                                    Map.of(
+                                            "yes", 5,
+                                            "no", -3
+                                    ),
 
-                            "location",
-                            Map.of(
-                                    "face", 3,
-                                    "arms", 3,
-                                    "legs", 2
+                                    "allergy_history",
+                                    Map.of(
+                                            "yes", 5,
+                                            "no", 0
+                                    ),
+
+                                    "itching",
+                                    Map.of(
+                                            "yes", 5,
+                                            "no", -4
+                                    ),
+
+                                    "burning",
+                                    Map.of(
+                                            "yes", 3,
+                                            "no", 0
+                                    ),
+
+                                    "scaling",
+                                    Map.of(
+                                            "yes", 2,
+                                            "no", 0
+                                    ),
+
+                                    "location",
+                                    Map.of(
+                                            "arms", 4,
+                                            "legs", 4,
+                                            "neck", 3,
+                                            "face", 3,
+                                            "groin", -2
+                                    ),
+
+                                    "duration",
+                                    Map.of(
+                                            "days", 0,
+                                            "weeks", 3,
+                                            "months", 2,
+                                            "years", 1
+                                    )
                             )
-                    )
-            ),
+                    ),
 
-            // =========================================
-            // ACNE
-            // =========================================
-
-            "acne_vulgaris",
-
-            new DiseaseProfile(
+                    // =====================================================
+                    // ACNE
+                    // =====================================================
 
                     "acne_vulgaris",
 
-                    "acneiform",
+                    new DiseaseProfile(
 
-                    "papulopustular",
+                            "acne_vulgaris",
 
-                    List.of(
-                            "face",
-                            "back",
-                            "chest"
-                    ),
+                            "follicular",
 
-                    List.of(
-                            "papule",
-                            "pustule",
-                            "comedone",
-                            "oily"
-                    ),
+                            "papules_pustules",
 
-                    4,
-
-                    Map.of(
-
-                            "oily_skin",
-                            Map.of(
-                                    "yes", 5,
-                                    "no", -3
+                            List.of(
+                                    "papule",
+                                    "pustule",
+                                    "comedone"
                             ),
 
-                            "blackheads",
-                            Map.of(
-                                    "yes", 5,
-                                    "no", -4
-                            ),
+                            1,
 
-                            "pus_filled_bumps",
                             Map.of(
-                                    "yes", 4,
-                                    "no", -2
-                            ),
 
-                            "painful_lesions",
-                            Map.of(
-                                    "yes", 3,
-                                    "no", 0
-                            ),
+                                    "blackheads",
+                                    Map.of(
+                                            "yes", 6,
+                                            "no", -5
+                                    ),
 
-                            "teenager",
-                            Map.of(
-                                    "yes", 3,
-                                    "no", -1
-                            ),
+                                    "pus_filled_bumps",
+                                    Map.of(
+                                            "yes", 5,
+                                            "no", -3
+                                    ),
 
-                            "location",
-                            Map.of(
-                                    "face", 5,
-                                    "back", 4,
-                                    "chest", 4
+                                    "oily_skin",
+                                    Map.of(
+                                            "yes", 4,
+                                            "no", -1
+                                    ),
+
+                                    "painful_lesions",
+                                    Map.of(
+                                            "yes", 3,
+                                            "no", 0
+                                    ),
+
+                                    "teenager",
+                                    Map.of(
+                                            "yes", 4,
+                                            "no", -1
+                                    ),
+
+                                    "itching",
+                                    Map.of(
+                                            "yes", 0,
+                                            "no", 1
+                                    ),
+
+                                    "location",
+                                    Map.of(
+                                            "face", 5,
+                                            "neck", 3,
+                                            "trunk", 2,
+                                            "arms", -2,
+                                            "legs", -3
+                                    ),
+
+                                    "duration",
+                                    Map.of(
+                                            "days", 0,
+                                            "weeks", 2,
+                                            "months", 4,
+                                            "years", 2
+                                    )
                             )
                     )
-            )
-    );
+            );
+
+    // =====================================================
+    // GET PROFILE
+    // =====================================================
 
     public DiseaseProfile get(
             String disease
     ) {
 
         return profiles.get(disease);
-    }
-
-    public Map<String, DiseaseProfile>
-    getProfiles() {
-
-        return profiles;
     }
 }

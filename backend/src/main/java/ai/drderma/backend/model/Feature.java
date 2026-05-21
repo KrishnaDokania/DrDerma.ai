@@ -4,69 +4,114 @@ import java.util.List;
 
 public class Feature {
 
+    // =====================================================
+    // KEY
+    // =====================================================
+
     private String key;
+
+    // =====================================================
+    // QUESTION TEXT
+    // =====================================================
 
     private String question;
 
-private String type;
+    // =====================================================
+    // TYPE
+    // =====================================================
+
+    private String type;
+
+    // =====================================================
+    // OPTIONS
+    // =====================================================
 
     private List<String> options;
+
+    // =====================================================
+    // CONSTRUCTORS
+    // =====================================================
 
     public Feature() {
     }
 
-public Feature(
+    public Feature(
 
-        String key,
+            String key,
 
-        String question,
+            String question,
 
-        FeatureType type,
+            FeatureType type,
 
-        List<String> options
-) {
+            List<String> options
+    ) {
 
-    this.key = key;
+        this.key =
+                key;
 
-    this.question = question;
+        this.question =
+                question;
 
-    this.type = type.name();
+        this.type =
+                type.name();
 
-    this.options = options;
-}
+        this.options =
+                options;
+    }
+
+    // =====================================================
+    // GETTERS
+    // =====================================================
 
     public String getKey() {
         return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
     }
 
     public String getQuestion() {
         return question;
     }
 
-    public void setQuestion(String question) {
-        this.question = question;
+    public String getType() {
+        return type;
     }
-
-  public String getType() {
-    return type;
-}
-
-public void setType(String type) {
-    this.type = type;
-}
 
     public List<String> getOptions() {
         return options;
+    }
+
+    // =====================================================
+    // SETTERS
+    // =====================================================
+
+    public void setKey(
+            String key
+    ) {
+
+        this.key =
+                key;
+    }
+
+    public void setQuestion(
+            String question
+    ) {
+
+        this.question =
+                question;
+    }
+
+    public void setType(
+            String type
+    ) {
+
+        this.type =
+                type;
     }
 
     public void setOptions(
             List<String> options
     ) {
 
-        this.options = options;
+        this.options =
+                options;
     }
 }

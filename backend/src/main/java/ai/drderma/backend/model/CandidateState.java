@@ -1,35 +1,70 @@
 package ai.drderma.backend.model;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CandidateState {
 
+    // =====================================================
+    // DISEASE
+    // =====================================================
+
     private final String disease;
+
+    // =====================================================
+    // IMAGE SCORE
+    // =====================================================
 
     private final double similarityScore;
 
-    private VisualTraits visualTraits;
+    // =====================================================
+    // QUESTION SCORE
+    // =====================================================
 
-    private double questionScore = 0.0;
+    private double questionScore = 0;
+
+    // =====================================================
+    // TRACK QUESTION IMPACT
+    // =====================================================
 
     private final Map<String, Integer>
             questionImpact =
             new HashMap<>();
 
-    private int questionsAnswered = 0;
+    // =====================================================
+    // VISUAL TRAITS
+    // =====================================================
 
-    private double contradictionPenalty = 0.0;
+    private VisualTraits visualTraits;
+
+    // =====================================================
+    // CONTRADICTION SCORE
+    // =====================================================
+
+    private double contradictionPenalty =
+            0;
+
+    // =====================================================
+    // CONSTRUCTOR
+    // =====================================================
 
     public CandidateState(
+
             String disease,
+
             double similarityScore
     ) {
 
-        this.disease = disease;
+        this.disease =
+                disease;
 
         this.similarityScore =
                 similarityScore;
     }
+
+    // =====================================================
+    // GETTERS
+    // =====================================================
 
     public String getDisease() {
         return disease;
@@ -39,20 +74,39 @@ public class CandidateState {
         return similarityScore;
     }
 
+    public double getQuestionScore() {
+        return questionScore;
+    }
+
     public VisualTraits getVisualTraits() {
         return visualTraits;
     }
+
+    public double getContradictionPenalty() {
+        return contradictionPenalty;
+    }
+
+    public Map<String, Integer>
+    getQuestionImpact() {
+
+        return questionImpact;
+    }
+
+    // =====================================================
+    // SETTERS
+    // =====================================================
 
     public void setVisualTraits(
             VisualTraits visualTraits
     ) {
 
-        this.visualTraits = visualTraits;
+        this.visualTraits =
+                visualTraits;
     }
 
-    public double getQuestionScore() {
-        return questionScore;
-    }
+    // =====================================================
+    // QUESTION SCORE
+    // =====================================================
 
     public void addQuestionScore(
             double delta
@@ -60,17 +114,25 @@ public class CandidateState {
 
         questionScore += delta;
 
-        questionsAnswered++;
+        // =====================================
+        // CONTRADICTION DETECTION
+        // =====================================
 
         if (delta < 0) {
 
             contradictionPenalty +=
-                    Math.abs(delta) * 0.5;
+                    Math.abs(delta) * 0.35;
         }
     }
 
+    // =====================================================
+    // RECORD IMPACT
+    // =====================================================
+
     public void recordImpact(
+
             String question,
+
             int delta
     ) {
 
@@ -80,53 +142,57 @@ public class CandidateState {
         );
     }
 
-    public Map<String, Integer>
-    getQuestionImpact() {
-
-        return questionImpact;
-    }
+    // =====================================================
+    // FINAL SCORE
+    // =====================================================
 
     public double getFinalScore() {
 
-        double imageWeight;
+        // =====================================
+        // IMAGE WEIGHT
+        // =====================================
 
-        double questionWeight;
+        double imageComponent =
+                similarityScore * 0.65;
 
-        if (questionsAnswered <= 2) {
+        // =====================================
+        // QUESTION WEIGHT
+        // =====================================
 
-            imageWeight = 0.75;
-            questionWeight = 0.25;
-
-        }
-
-        else if (questionsAnswered <= 5) {
-
-            imageWeight = 0.55;
-            questionWeight = 0.45;
-        }
-
-        else {
-
-            imageWeight = 0.35;
-            questionWeight = 0.65;
-        }
-
-        double weightedImage =
-                similarityScore * imageWeight;
-
-        double weightedQuestions =
+        double questionComponent =
                 normalizeQuestionScore()
-                        * questionWeight;
+                        * 0.35;
 
-        return weightedImage
-                + weightedQuestions
-                - contradictionPenalty;
+        // =====================================
+        // CONTRADICTION PENALTY
+        // =====================================
+
+        double contradictionComponent =
+                contradictionPenalty;
+
+        return
+
+                imageComponent
+
+                        +
+
+                        questionComponent
+
+                        -
+
+                        contradictionComponent;
     }
+
+    // =====================================================
+    // NORMALIZE
+    // =====================================================
 
     private double normalizeQuestionScore() {
 
         double normalized =
-                questionScore / 10.0;
+                questionScore / 12.0;
+
+        // SOFT CLAMP
 
         if (normalized > 1.0) {
             return 1.0;

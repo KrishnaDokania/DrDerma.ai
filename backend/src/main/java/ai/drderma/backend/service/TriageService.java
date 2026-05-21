@@ -13,12 +13,15 @@ import java.util.stream.Collectors;
 @Service
 public class TriageService {
 
-    private static final long SESSION_TIMEOUT_MS =
+    private static final long
+            SESSION_TIMEOUT_MS =
             10 * 60 * 1000;
 
-    private final DiseaseKnowledgeBase kb;
+    private final DiseaseKnowledgeBase
+            kb;
 
-    private final FeatureRepository featureRepository;
+    private final FeatureRepository
+            featureRepository;
 
     private final Map<String, TriageSession>
             sessions =
@@ -85,13 +88,17 @@ public class TriageService {
             );
         }
 
+        // SESSION EXPIRY
+
         if (
                 System.currentTimeMillis()
                         - session.getCreatedAt()
                         > SESSION_TIMEOUT_MS
         ) {
 
-            sessions.remove(sessionId);
+            sessions.remove(
+                    sessionId
+            );
 
             return Map.of(
                     "error",
@@ -99,9 +106,11 @@ public class TriageService {
             );
         }
 
-        signal = signal.toLowerCase();
+        signal =
+                signal.toLowerCase();
 
-        answer = answer.toLowerCase();
+        answer =
+                answer.toLowerCase();
 
         session.getAskedSignals()
                 .add(signal);
@@ -114,6 +123,8 @@ public class TriageService {
 
                 answer
         );
+
+        rerankCandidates(session);
 
         return next(session);
     }
@@ -131,8 +142,10 @@ public class TriageService {
             String answer
     ) {
 
-        for (CandidateState candidate :
-                session.getCandidates()) {
+        for (
+                CandidateState candidate :
+                session.getCandidates()
+        ) {
 
             DiseaseProfile profile =
                     kb.get(
@@ -143,14 +156,19 @@ public class TriageService {
                 continue;
             }
 
+            Map<String, Map<String, Integer>>
+                    signals =
+                    profile.getSignalWeights();
+
+            if (
+                    !signals.containsKey(signal)
+            ) {
+
+                continue;
+            }
+
             int delta =
-
-                    profile.getSignalWeights()
-
-                            .getOrDefault(
-                                    signal,
-                                    Map.of()
-                            )
+                    signals.get(signal)
 
                             .getOrDefault(
                                     answer,
@@ -188,6 +206,27 @@ public class TriageService {
     }
 
     // =====================================================
+    // RERANK
+    // =====================================================
+
+    private void rerankCandidates(
+            TriageSession session
+    ) {
+
+        session.getCandidates()
+
+                .sort((a, b) ->
+
+                        Double.compare(
+
+                                b.getFinalScore(),
+
+                                a.getFinalScore()
+                        )
+                );
+    }
+
+    // =====================================================
     // NEXT STEP
     // =====================================================
 
@@ -201,15 +240,6 @@ public class TriageService {
 
                         .stream()
 
-                        .filter(candidate ->
-
-                                !session
-                                        .getEliminatedDiseases()
-                                        .contains(
-                                                candidate.getDisease()
-                                        )
-                        )
-
                         .sorted((a, b) ->
 
                                 Double.compare(
@@ -220,25 +250,31 @@ public class TriageService {
                                 )
                         )
 
-                        .collect(Collectors.toList());
+                        .collect(
+                                Collectors.toList()
+                        );
+
+        // =====================================
+        // REMOVE VERY WEAK DISEASES
+        // =====================================
 
         eliminateWeakCandidates(
                 ranked
         );
 
         // =====================================
-        // STOP CONDITION
+        // STOPPING CONDITION
         // =====================================
 
-if (
+        if (
 
-    session.getAskedSignals()
-            .size() >= 6
+                session.getAskedSignals()
+                        .size() >= 6
 
-    &&
+                        &&
 
-    shouldStop(ranked)
-){
+                        shouldStop(ranked)
+        ) {
 
             return buildFinalResult(
 
@@ -281,14 +317,24 @@ if (
                                 nextQuestion
                         );
 
+        // SAFETY
+
+        if (feature == null) {
+
+            return buildFinalResult(
+
+                    session,
+
+                    ranked
+            );
+        }
+
         Map<String, Object>
                 response =
                 new HashMap<>();
 
         response.put(
-
                 "sessionId",
-
                 session.getSessionId()
         );
 
@@ -305,11 +351,28 @@ if (
 
                         .limit(3)
 
-                        .map(
-                                CandidateState::getDisease
-                        )
+                        .map(candidate -> {
 
-                        .toList()
+                            Map<String, Object>
+                                    disease =
+                                    new HashMap<>();
+
+                            disease.put(
+                                    "disease",
+                                    candidate.getDisease()
+                            );
+
+                            disease.put(
+                                    "score",
+                                    candidate.getFinalScore()
+                            );
+
+                            return disease;
+                        })
+
+                        .collect(
+                                Collectors.toList()
+                        )
         );
 
         return response;
@@ -318,61 +381,64 @@ if (
     // =====================================================
     // ELIMINATION
     // =====================================================
-private void eliminateWeakCandidates(
-        List<CandidateState> ranked
-) {
 
-    if (ranked.isEmpty()) {
-        return;
-    }
+    private void eliminateWeakCandidates(
+            List<CandidateState> ranked
+    ) {
 
-    double top =
-            ranked.get(0)
-                    .getFinalScore();
+        if (
+                ranked.isEmpty()
+        ) {
 
-    ranked.removeIf(candidate -> {
+            return;
+        }
 
-        double diff =
-                top
-                        - candidate
+        double top =
+                ranked.get(0)
                         .getFinalScore();
 
-        // MUCH SMALLER THRESHOLD
+        ranked.removeIf(candidate -> {
 
-        return diff > 1.5;
-    });
-}
+            double diff =
+                    top
+                            - candidate
+                            .getFinalScore();
+
+            return diff > 2.5;
+        });
+    }
+
     // =====================================================
     // STOPPING
     // =====================================================
 
-   private boolean shouldStop(
-        List<CandidateState> ranked
-) {
-
-    if (
-            ranked == null
-            || ranked.size() < 2
+    private boolean shouldStop(
+            List<CandidateState> ranked
     ) {
 
-        return false;
+        if (
+                ranked == null
+                        ||
+                        ranked.size() < 2
+        ) {
+
+            return false;
+        }
+
+        double top =
+                ranked.get(0)
+                        .getFinalScore();
+
+        double second =
+                ranked.get(1)
+                        .getFinalScore();
+
+        double gap =
+                top - second;
+
+        return gap >= 5.0;
     }
 
-    double top =
-            ranked.get(0)
-                    .getFinalScore();
-
-    double second =
-            ranked.get(1)
-                    .getFinalScore();
-
-    double gap =
-            top - second;
-
-    // MUCH HARDER TO STOP
-
-    return gap >= 5.0;
-}
     // =====================================================
     // FINAL RESULT
     // =====================================================
@@ -393,12 +459,32 @@ private void eliminateWeakCandidates(
                         ? ranked.get(1)
                         : top;
 
-     double gap =
-        top.getFinalScore()
-                - second.getFinalScore();
+        double gap =
+                top.getFinalScore()
+                        - second.getFinalScore();
 
-double confidence =
- Math.min(95,45+(gap * 12)+(session.getAskedSignals().size() * 4));
+        double confidence =
+
+                Math.min(
+
+                        95,
+
+                        45
+
+                                +
+
+                                (
+                                        gap * 12
+                                )
+
+                                +
+
+                                (
+                                        session
+                                                .getAskedSignals()
+                                                .size() * 4
+                                )
+                );
 
         Map<String, Object>
                 mostLikely =
@@ -408,6 +494,19 @@ double confidence =
                 "disease",
                 top.getDisease()
         );
+        mostLikely.put(
+        "description",
+        getDiseaseDescription(
+                top.getDisease()
+        )
+);
+
+mostLikely.put(
+        "medications",
+        getMedicationSuggestions(
+                top.getDisease()
+        )
+);
 
         mostLikely.put(
                 "confidence",
@@ -447,8 +546,9 @@ double confidence =
                                     "confidence",
 
                                     Math.max(
-                                            confidence
-                                                    - 15,
+
+                                            confidence - 15,
+
                                             5
                                     )
                             );
@@ -456,7 +556,9 @@ double confidence =
                             return alt;
                         })
 
-                        .toList();
+                        .collect(
+                                Collectors.toList()
+                        );
 
         Map<String, Object>
                 response =
@@ -479,40 +581,208 @@ double confidence =
 
         return response;
     }
+    private String getDiseaseDescription(
+        String disease
+) {
 
-    // =====================================================
-    // CONFIDENCE
-    // =====================================================
+    switch (disease) {
 
-    private double calculateConfidence(
+        case "tinea_corporis":
 
-            CandidateState top,
+            return
+                    "Tinea corporis is a superficial fungal infection "
+                    + "commonly known as ringworm. It typically presents "
+                    + "as circular, itchy, red patches with raised borders "
+                    + "and central clearing. The condition spreads through "
+                    + "direct skin contact, contaminated surfaces, or moist environments.";
 
-            CandidateState second
-    ) {
+        case "psoriasis_vulgaris":
 
-        double gap =
-                top.getFinalScore()
-                        - second.getFinalScore();
+            return
+                    "Psoriasis vulgaris is a chronic autoimmune skin disorder "
+                    + "characterized by thick, red, scaly plaques covered "
+                    + "with silvery-white scales. It commonly affects the scalp, "
+                    + "elbows, knees, and trunk and may fluctuate in severity over time.";
 
-        double confidence =
+        case "eczema_atopic_dermatitis":
 
-                100 *
-                        (
-                                1
-                                        - Math.exp(
-                                        -gap / 15
-                                )
-                        );
+            return
+                    "Atopic dermatitis (eczema) is an inflammatory skin condition "
+                    + "causing dry, itchy, inflamed, and sometimes cracked skin. "
+                    + "It is commonly associated with allergies, asthma, or sensitive skin.";
 
-        if (confidence > 99) {
-            confidence = 99;
-        }
+        case "acne_vulgaris":
 
-        if (confidence < 35) {
-            confidence = 35;
-        }
+            return
+                    "Acne vulgaris is a common skin condition involving clogged pores, "
+                    + "oil overproduction, blackheads, whiteheads, and inflamed pimples. "
+                    + "It most commonly affects the face, chest, shoulders, and back.";
 
-        return confidence;
+        case "varicella_chickenpox":
+
+            return
+                    "Chickenpox (varicella) is a highly contagious viral infection "
+                    + "characterized by itchy, fluid-filled blisters and widespread rash. "
+                    + "It is often accompanied by fever, fatigue, and body aches.";
+
+        default:
+
+            return
+                    "AI-generated clinical assessment.";
     }
+}
+private List<Map<String, String>>
+getMedicationSuggestions(
+        String disease
+) {
+
+    List<Map<String, String>>
+            medications =
+            new ArrayList<>();
+
+    switch (disease) {
+
+        // =====================================
+        // TINEA
+        // =====================================
+
+        case "tinea_corporis":
+
+            medications.add(
+                    Map.of(
+                            "name",
+                            "Clotrimazole 1% Cream",
+
+                            "usage",
+                            "Apply twice daily for 2-4 weeks"
+                    )
+            );
+
+            medications.add(
+                    Map.of(
+                            "name",
+                            "Terbinafine Cream",
+
+                            "usage",
+                            "Apply once daily to affected area"
+                    )
+            );
+
+            break;
+
+        // =====================================
+        // PSORIASIS
+        // =====================================
+
+        case "psoriasis_vulgaris":
+
+            medications.add(
+                    Map.of(
+                            "name",
+                            "Topical Corticosteroids",
+
+                            "usage",
+                            "Apply thin layer once daily"
+                    )
+            );
+
+            medications.add(
+                    Map.of(
+                            "name",
+                            "Salicylic Acid",
+
+                            "usage",
+                            "Helps reduce scaling"
+                    )
+            );
+
+            break;
+
+        // =====================================
+        // ECZEMA
+        // =====================================
+
+        case "eczema_atopic_dermatitis":
+
+            medications.add(
+                    Map.of(
+                            "name",
+                            "Hydrocortisone Cream",
+
+                            "usage",
+                            "Apply 1-2 times daily"
+                    )
+            );
+
+            medications.add(
+                    Map.of(
+                            "name",
+                            "Moisturizing Cream",
+
+                            "usage",
+                            "Use frequently to restore skin barrier"
+                    )
+            );
+
+            break;
+
+        // =====================================
+        // ACNE
+        // =====================================
+
+        case "acne_vulgaris":
+
+            medications.add(
+                    Map.of(
+                            "name",
+                            "Benzoyl Peroxide",
+
+                            "usage",
+                            "Apply once daily"
+                    )
+            );
+
+            medications.add(
+                    Map.of(
+                            "name",
+                            "Adapalene Gel",
+
+                            "usage",
+                            "Apply at night"
+                    )
+            );
+
+            break;
+
+        // =====================================
+        // CHICKENPOX
+        // =====================================
+
+        case "varicella_chickenpox":
+
+            medications.add(
+                    Map.of(
+                            "name",
+                            "Calamine Lotion",
+
+                            "usage",
+                            "Apply to reduce itching and irritation"
+                    )
+            );
+
+            medications.add(
+                    Map.of(
+                            "name",
+                            "Paracetamol",
+
+                            "usage",
+                            "Used to manage fever and discomfort"
+                    )
+            );
+
+            break;
+    }
+
+    return medications;
+}
 }

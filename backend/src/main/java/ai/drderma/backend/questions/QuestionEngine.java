@@ -29,6 +29,10 @@ public class QuestionEngine {
             return null;
         }
 
+        // =====================================================
+        // SORT CANDIDATES
+        // =====================================================
+
         List<CandidateState> ranked =
                 new ArrayList<>(candidates);
 
@@ -40,102 +44,117 @@ public class QuestionEngine {
                 )
         );
 
+        // =====================================================
+        // ONLY TOP COMPETITORS MATTER
+        // =====================================================
+
         List<CandidateState> topCandidates =
                 ranked.stream()
-                        .limit(5)
-                        .collect(Collectors.toList());
 
-        String dominantCategory =
-                dominantCategory(
-                        topCandidates,
-                        knowledgeBase
-                );
+                        .limit(3)
 
-        String dominantVisualFamily =
-                dominantVisualFamily(
-                        topCandidates,
-                        knowledgeBase
-                );
+                        .collect(
+                                Collectors.toList()
+                        );
+
+        // =====================================================
+        // IMAGE TRAITS
+        // =====================================================
 
         Set<String> dominantTraits =
                 extractDominantTraits(
                         topCandidates
                 );
 
+        // =====================================================
+        // COLLECT QUESTIONS
+        // =====================================================
+
         Map<String, Integer>
-        questionFrequency =
-        new HashMap<>();
+                questionFrequency =
+                new HashMap<>();
 
-for (
-        CandidateState candidate :
-        topCandidates
-) {
-
-    DiseaseProfile profile =
-            knowledgeBase.get(
-                    candidate.getDisease()
-            );
-
-    if (profile == null) {
-        continue;
-    }
-
-    for (
-            String question :
-            profile.getSignalWeights()
-                    .keySet()
-    ) {
-
-        if (
-                askedQuestions.contains(
-                        question
-                )
+        for (
+                CandidateState candidate :
+                topCandidates
         ) {
 
-            continue;
+            DiseaseProfile profile =
+                    knowledgeBase.get(
+                            candidate.getDisease()
+                    );
+
+            if (profile == null) {
+                continue;
+            }
+
+            for (
+                    String question :
+                    profile.getSignalWeights()
+                            .keySet()
+            ) {
+
+                if (
+                        askedQuestions.contains(
+                                question
+                        )
+                ) {
+
+                    continue;
+                }
+
+                questionFrequency.merge(
+
+                        question,
+
+                        1,
+
+                        Integer::sum
+                );
+            }
         }
 
-        questionFrequency.merge(
+        // =====================================================
+        // SORT QUESTIONS
+        // =====================================================
 
-                question,
+        Set<String> possibleQuestions =
 
-                1,
+                questionFrequency
 
-                Integer::sum
-        );
-    }
-}
+                        .entrySet()
 
-Set<String> possibleQuestions =
+                        .stream()
 
-        questionFrequency
-
-                .entrySet()
-
-                .stream()
-
-                .sorted(
-                        (a, b) -> Integer.compare(
-                                b.getValue(),
-                                a.getValue()
+                        .sorted(
+                                (a, b) -> Integer.compare(
+                                        b.getValue(),
+                                        a.getValue()
+                                )
                         )
-                )
 
-                .map(
-                        Map.Entry::getKey
-                )
-
-                .collect(
-                        Collectors.toCollection(
-                                LinkedHashSet::new
+                        .map(
+                                Map.Entry::getKey
                         )
-                );
+
+                        .collect(
+                                Collectors.toCollection(
+                                        LinkedHashSet::new
+                                )
+                        );
+
+        // =====================================================
+        // FIND BEST QUESTION
+        // =====================================================
+
         String bestQuestion = null;
 
         double bestScore = -1;
 
-        for (String question :
-                possibleQuestions) {
+        for (
+                String question :
+                possibleQuestions
+        ) {
 
             double score =
                     calculateDiscriminativePower(
@@ -144,25 +163,25 @@ Set<String> possibleQuestions =
 
                             topCandidates,
 
-                            knowledgeBase,
-
-                            dominantCategory,
-
-                            dominantVisualFamily
+                            knowledgeBase
                     );
 
             // =====================================
-            // VISUAL TRAIT BOOST
+            // IMAGE TRAIT BOOST
             // =====================================
 
-            for (String trait :
-                    dominantTraits) {
+            for (
+                    String trait :
+                    dominantTraits
+            ) {
 
                 if (
-                        question.contains(trait)
+                        question.contains(
+                                trait
+                        )
                 ) {
 
-                    score += 15;
+                    score += 20;
                 }
             }
 
@@ -173,27 +192,18 @@ Set<String> possibleQuestions =
             if (
                     question.contains("ring")
                             ||
-                            question.contains("plaque")
+                            question.contains("central")
                             ||
                             question.contains("silvery")
                             ||
-                            question.contains("central")
+                            question.contains("plaque")
+                            ||
+                            question.contains("oozing")
+                            ||
+                            question.contains("blackheads")
             ) {
 
                 score += 10;
-            }
-
-            // =====================================
-            // LOCATION BOOST
-            // =====================================
-
-            if (
-                    question.contains(
-                            "location"
-                    )
-            ) {
-
-                score += 5;
             }
 
             // =====================================
@@ -203,13 +213,17 @@ Set<String> possibleQuestions =
             if (
                     question.equals("itching")
                             ||
-                            question.equals("redness")
-                            ||
                             question.equals("burning")
+                            ||
+                            question.equals("redness")
             ) {
 
-                score -= 5;
+                score -= 8;
             }
+
+            // =====================================
+            // BEST
+            // =====================================
 
             if (score > bestScore) {
 
@@ -218,17 +232,22 @@ Set<String> possibleQuestions =
                 bestQuestion = question;
             }
         }
-        if (
-        bestQuestion == null
-        &&
-        !possibleQuestions.isEmpty()
-) {
 
-    bestQuestion =
-            possibleQuestions
-                    .iterator()
-                    .next();
-}
+        // =====================================================
+        // FALLBACK
+        // =====================================================
+
+        if (
+                bestQuestion == null
+                        &&
+                        !possibleQuestions.isEmpty()
+        ) {
+
+            bestQuestion =
+                    possibleQuestions
+                            .iterator()
+                            .next();
+        }
 
         return bestQuestion;
     }
@@ -244,23 +263,38 @@ Set<String> possibleQuestions =
 
             List<CandidateState> candidates,
 
-            DiseaseKnowledgeBase knowledgeBase,
-
-            String dominantCategory,
-
-            String dominantVisualFamily
+            DiseaseKnowledgeBase knowledgeBase
     ) {
 
-        Map<String, List<Integer>>
-                answerBuckets =
-                new HashMap<>();
+        // =====================================
+        // ONLY TOP 2 COMPETITORS
+        // =====================================
+
+        List<CandidateState> focused =
+                candidates.stream()
+
+                        .sorted(
+                                (a, b) -> Double.compare(
+                                        b.getFinalScore(),
+                                        a.getFinalScore()
+                                )
+                        )
+
+                        .limit(2)
+
+                        .collect(
+                                Collectors.toList()
+                        );
+
+        List<Integer> allWeights =
+                new ArrayList<>();
 
         double totalScore = 0;
 
-        int rarityWeight = 1;
-
-        for (CandidateState candidate :
-                candidates) {
+        for (
+                CandidateState candidate :
+                focused
+        ) {
 
             DiseaseProfile profile =
                     knowledgeBase.get(
@@ -282,225 +316,116 @@ Set<String> possibleQuestions =
                 continue;
             }
 
-            // CATEGORY BOOST
+            Map<String, Integer> weights =
+                    signals.get(question);
 
-            if (
-                    profile.getCategory()
-                            .equals(
-                                    dominantCategory
-                            )
-            ) {
+            // =====================================
+            // EXCLUSIVE SIGNAL BONUS
+            // =====================================
 
-                totalScore += 5;
-            }
-
-            // VISUAL FAMILY BOOST
-
-            if (
-                    profile.getVisualFamily()
-                            .equals(
-                                    dominantVisualFamily
-                            )
-            ) {
-
-                totalScore += 8;
-            }
-
-            // MORPHOLOGY BOOST
+            boolean exclusiveSignal =
+                    false;
 
             for (
-                    String morphology :
-                    profile.getMorphology()
+                    CandidateState other :
+                    focused
             ) {
 
                 if (
-                        question.contains(
-                                morphology
-                        )
+                        other == candidate
                 ) {
 
-                    totalScore += 4;
+                    continue;
+                }
+
+                DiseaseProfile otherProfile =
+                        knowledgeBase.get(
+                                other.getDisease()
+                        );
+
+                if (otherProfile == null) {
+                    continue;
+                }
+
+                if (
+                        !otherProfile
+                                .getSignalWeights()
+                                .containsKey(question)
+                ) {
+
+                    exclusiveSignal = true;
                 }
             }
 
-            rarityWeight =
-                    Math.max(
+            if (exclusiveSignal) {
 
-                            rarityWeight,
-
-                            profile.getRarityWeight()
-                    );
-
-            Map<String, Integer> answers =
-                    signals.get(question);
-
-            for (
-                    Map.Entry<String, Integer>
-                            entry :
-                    answers.entrySet()
-            ) {
-
-                answerBuckets
-
-                        .computeIfAbsent(
-
-                                entry.getKey(),
-
-                                k -> new ArrayList<>()
-                        )
-
-                        .add(
-                                entry.getValue()
-                        );
+                totalScore += 25;
             }
+
+            allWeights.addAll(
+                    weights.values()
+            );
         }
 
-        if (answerBuckets.isEmpty()) {
-            return 0;
-        }
+        // =====================================
+        // NOT ENOUGH INFO
+        // =====================================
 
-        for (
-                List<Integer> values :
-                answerBuckets.values()
+        if (
+                allWeights.size() < 2
         ) {
 
-            totalScore +=
-                    calculateVariance(
-                            values
+            return totalScore;
+        }
+
+        // =====================================
+        // VARIANCE
+        // =====================================
+
+        double mean =
+                allWeights.stream()
+
+                        .mapToDouble(i -> i)
+
+                        .average()
+
+                        .orElse(0);
+
+        double variance = 0;
+
+        for (int weight : allWeights) {
+
+            variance +=
+                    Math.pow(
+                            weight - mean,
+                            2
                     );
         }
 
-        totalScore +=
-                answerBuckets.size()
-                        * 0.75;
+        variance /=
+                allWeights.size();
+
+        totalScore += variance;
+
+        // =====================================
+        // TOP COMPETITOR SEPARATION
+        // =====================================
 
         totalScore +=
                 calculateSeparationBonus(
 
                         question,
 
-                        candidates,
+                        focused,
 
                         knowledgeBase
                 );
-
-        totalScore *= rarityWeight;
 
         return totalScore;
     }
 
     // =====================================================
-    // DOMINANT CATEGORY
-    // =====================================================
-
-    private static String dominantCategory(
-
-            List<CandidateState> candidates,
-
-            DiseaseKnowledgeBase kb
-    ) {
-
-        Map<String, Double>
-                categoryScores =
-                new HashMap<>();
-
-        for (CandidateState candidate :
-                candidates) {
-
-            DiseaseProfile profile =
-                    kb.get(
-                            candidate.getDisease()
-                    );
-
-            if (profile == null) {
-                continue;
-            }
-
-            categoryScores.merge(
-
-                    profile.getCategory(),
-
-                    candidate.getFinalScore(),
-
-                    Double::sum
-            );
-        }
-
-        return categoryScores
-
-                .entrySet()
-
-                .stream()
-
-                .max(
-                        Map.Entry
-                                .comparingByValue()
-                )
-
-                .map(
-                        Map.Entry::getKey
-                )
-
-                .orElse(null);
-    }
-
-    // =====================================================
-    // DOMINANT VISUAL FAMILY
-    // =====================================================
-
-    private static String dominantVisualFamily(
-
-            List<CandidateState> candidates,
-
-            DiseaseKnowledgeBase kb
-    ) {
-
-        Map<String, Double>
-                familyScores =
-                new HashMap<>();
-
-        for (CandidateState candidate :
-                candidates) {
-
-            DiseaseProfile profile =
-                    kb.get(
-                            candidate.getDisease()
-                    );
-
-            if (profile == null) {
-                continue;
-            }
-
-            familyScores.merge(
-
-                    profile.getVisualFamily(),
-
-                    candidate.getFinalScore(),
-
-                    Double::sum
-            );
-        }
-
-        return familyScores
-
-                .entrySet()
-
-                .stream()
-
-                .max(
-                        Map.Entry
-                                .comparingByValue()
-                )
-
-                .map(
-                        Map.Entry::getKey
-                )
-
-                .orElse(null);
-    }
-
-    // =====================================================
-    // EXTRACT DOMINANT TRAITS
+    // IMAGE TRAITS
     // =====================================================
 
     private static Set<String>
@@ -512,8 +437,10 @@ Set<String> possibleQuestions =
         Set<String> traits =
                 new HashSet<>();
 
-        for (CandidateState candidate :
-                candidates) {
+        for (
+                CandidateState candidate :
+                candidates
+        ) {
 
             if (
                     candidate.getVisualTraits()
@@ -545,13 +472,23 @@ Set<String> possibleQuestions =
                         visualTraits.getTextures()
                 );
             }
+
+            if (
+                    visualTraits.getColors()
+                            != null
+            ) {
+
+                traits.addAll(
+                        visualTraits.getColors()
+                );
+            }
         }
 
         return traits;
     }
 
     // =====================================================
-    // TOP COMPETITOR SEPARATION
+    // SEPARATION BONUS
     // =====================================================
 
     private static double
@@ -564,7 +501,10 @@ Set<String> possibleQuestions =
             DiseaseKnowledgeBase knowledgeBase
     ) {
 
-        if (candidates.size() < 2) {
+        if (
+                candidates.size() < 2
+        ) {
+
             return 0;
         }
 
@@ -584,7 +524,12 @@ Set<String> possibleQuestions =
                         top2.getDisease()
                 );
 
-        if (p1 == null || p2 == null) {
+        if (
+                p1 == null
+                        ||
+                        p2 == null
+        ) {
+
             return 0;
         }
 
@@ -596,71 +541,51 @@ Set<String> possibleQuestions =
                 p2.getSignalWeights()
                         .get(question);
 
-        if (q1 == null || q2 == null) {
+        if (
+                q1 == null
+                        ||
+                        q2 == null
+        ) {
+
             return 0;
         }
 
         double diff = 0;
 
-        Set<String> allAnswers =
+        Set<String> answers =
                 new HashSet<>();
 
-        allAnswers.addAll(
+        answers.addAll(
                 q1.keySet()
         );
 
-        allAnswers.addAll(
+        answers.addAll(
                 q2.keySet()
         );
 
-        for (String ans : allAnswers) {
+        for (
+                String answer :
+                answers
+        ) {
 
             int v1 =
                     q1.getOrDefault(
-                            ans,
+                            answer,
                             0
                     );
 
             int v2 =
                     q2.getOrDefault(
-                            ans,
+                            answer,
                             0
                     );
 
-            diff += Math.abs(v1 - v2);
+            diff +=
+                    Math.abs(
+                            v1 - v2
+                    );
         }
 
-        return diff;
-    }
-
-    // =====================================================
-    // VARIANCE
-    // =====================================================
-
-    private static double calculateVariance(
-            List<Integer> values
-    ) {
-
-        if (values.isEmpty()) {
-            return 0;
-        }
-
-        double mean =
-                values.stream()
-                        .mapToDouble(v -> v)
-                        .average()
-                        .orElse(0);
-
-        double variance = 0;
-
-        for (int value : values) {
-
-            variance += Math.pow(
-                    value - mean,
-                    2
-            );
-        }
-
-        return variance / values.size();
+        return diff * 2;
     }
 }

@@ -318,43 +318,64 @@ console.log(type);
 
             <AnimatePresence>
 
-              {activeDiseases.map(
-                (disease) => (
+             {
+  activeDiseases.map(
+    (diseaseObj) => (
 
-                  <motion.div
+      <motion.div
 
-                    key={disease}
+        key={diseaseObj.disease}
 
-                    initial={{
-                      opacity: 0,
-                      scale: 0.8
-                    }}
+        initial={{
+          opacity: 0,
+          scale: 0.8
+        }}
 
-                    animate={{
-                      opacity: 1,
-                      scale: 1
-                    }}
+        animate={{
+          opacity: 1,
+          scale: 1
+        }}
 
-                    exit={{
-                      opacity: 0,
-                      scale: 0.7
-                    }}
+        exit={{
+          opacity: 0,
+          scale: 0.7
+        }}
 
-                    className="
-                      px-4 py-2 rounded-2xl
-                      bg-yellow-400/10
-                      border border-yellow-400/20
-                      text-yellow-300
-                      capitalize text-sm
-                    "
-                  >
-                    {disease.replaceAll(
-                      "_",
-                      " "
-                    )}
-                  </motion.div>
-                )
-              )}
+        className="
+          px-4 py-2 rounded-2xl
+          bg-yellow-400/10
+          border border-yellow-400/20
+          text-yellow-300
+          capitalize text-sm
+          flex items-center gap-2
+        "
+      >
+
+        <span>
+          {
+            diseaseObj.disease
+
+              .replaceAll("_", " ")
+
+              .replace(
+                /\b\w/g,
+                c => c.toUpperCase()
+              )
+          }
+        </span>
+
+        <span className="text-yellow-500 text-xs">
+          {
+            Math.round(
+              diseaseObj.score
+            )
+          }%
+        </span>
+
+      </motion.div>
+    )
+  )
+}
 
             </AnimatePresence>
 
