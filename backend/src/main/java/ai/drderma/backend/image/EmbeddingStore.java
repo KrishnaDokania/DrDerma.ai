@@ -9,7 +9,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+// @Component
 public class EmbeddingStore {
 
     private final List<double[]> vectors = new ArrayList<>();
