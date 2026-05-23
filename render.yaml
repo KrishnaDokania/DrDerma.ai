@@ -1,7 +1,6 @@
 services:
   - type: web
     name: drderma-backend
-    env: java
+    runtime: docker
     rootDir: backend
-    buildCommand: ./mvnw clean install
-    startCommand: java -jar target/*.jar
+    dockerfilePath: ./Dockerfile
