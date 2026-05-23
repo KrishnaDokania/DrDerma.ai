@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: drderma-backend
-    runtime: docker
-    rootDir: backend
-    dockerfilePath: ./Dockerfile
