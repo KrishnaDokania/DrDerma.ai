@@ -11,7 +11,7 @@ import ProcessingScreen from "./components/ProcessingScreen";
 import ResultScreen from "./components/ResultScreen";
 
 const BASE_URL =
-  "http://localhost:8080/api";
+  "https://drderma-backend.onrender.com";
 
 export default function App() {
 
