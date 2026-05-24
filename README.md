@@ -10,6 +10,7 @@ The project combines image-based disease prediction with a dynamic clinical ques
 
 [Open DrDerma.ai](https://stately-strudel-38c0a0.netlify.app/)
 
+⚠️ Backend may take a few seconds to wake up on first request because it is hosted on the free Render tier.
 ---
 
 ## 🚀 Features
